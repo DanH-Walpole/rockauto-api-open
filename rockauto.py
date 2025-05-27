@@ -151,10 +151,11 @@ async def get_categories( search_make: str, search_year: str, search_model: str,
     page_content = browser.open( search_link ).read()
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
+    parser = HTMLParser(page_content)
+    nav_links = parser.css('a.navlabellink')[4:] # Skip first four elements
 
-    for x in soup:
-        categories_list.append( {'make': search_make, 'year': search_year, 'model': search_model, 'engine': search_engine, 'category': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
+    for x in nav_links:
+        categories_list.append({'make': search_make, 'year': search_year, 'model': search_model, 'engine': search_engine, 'category': x.text(), 'link': 'https://www.rockauto.com' + x.attrs.get('href', '')})
 
     return categories_list
 
@@ -166,10 +167,11 @@ async def get_sub_categories( search_make: str, search_year: str, search_model: 
     page_content = browser.open( search_link ).read()
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[5:]
+    parser = HTMLParser(page_content)
+    nav_links = parser.css('a.navlabellink')[5:] # Skip first five elements
 
-    for x in soup:
-        sub_categories_list.append( {'make': search_make, 'year': search_year, 'model': search_model, 'engine': search_engine, 'category': search_category, 'sub_category': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
+    for x in nav_links:
+        sub_categories_list.append({'make': search_make, 'year': search_year, 'model': search_model, 'engine': search_engine, 'category': search_category, 'sub_category': x.text(), 'link': 'https://www.rockauto.com' + x.attrs.get('href', '')})
 
     return sub_categories_list
 
@@ -186,32 +188,32 @@ async def get_parts( search_make: str, search_year: str, search_model: str, sear
     page_content = browser.open(search_link).read()
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib')
+    parser = HTMLParser(page_content)
     
     # Find parts table rows
-    part_rows = soup.find_all('tr', attrs={'class': 'listing-inner-row'})
+    part_rows = parser.css('tr.listing-inner-row')
     
     for row in part_rows:
         try:
             # Get manufacturer
-            manufacturer_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'})
-            manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
+            manufacturer_elem = row.css_first('span.listing-final-manufacturer')
+            manufacturer = manufacturer_elem.text().strip() if manufacturer_elem else "N/A"
             
             # Get part number
-            part_number_elem = row.find('span', attrs={'class': 'listing-final-partnumber'})
-            part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
+            part_number_elem = row.css_first('span.listing-final-partnumber')
+            part_number = part_number_elem.text().strip() if part_number_elem else "N/A"
             
             # Get price
-            price_elem = row.find('span', attrs={'class': 'listing-price'})
-            price = price_elem.get_text().strip() if price_elem else "N/A"
+            price_elem = row.css_first('span.listing-price')
+            price = price_elem.text().strip() if price_elem else "N/A"
             
             # Get part notes/info
-            info_elem = row.find('div', attrs={'class': 'listing-text-row'})
-            info = info_elem.get_text().strip() if info_elem else "N/A"
+            info_elem = row.css_first('div.listing-text-row')
+            info = info_elem.text().strip() if info_elem else "N/A"
             
             # Get more info link if available
-            link_elem = row.find('a', attrs={'class': 'more-info-link'})
-            more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
+            link_elem = row.css_first('a.more-info-link')
+            more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
             
             parts_list.append({
                 'make': search_make,
