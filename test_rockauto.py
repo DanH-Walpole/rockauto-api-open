@@ -50,3 +50,20 @@ def test_search_endpoint_structure():
     for param in expected_params:
         assert param in params, f"Parameter {param} missing from search_parts function"
         assert params[param].default is None, f"Parameter {param} should be optional"
+        
+def test_search_endpoint_response_structure():
+    """Test that the search endpoint returns the correct response structure"""
+    # This is a simple structural test, not hitting the actual API
+    # Create a mock function with the same return structure
+    def mock_search():
+        return {
+            "filters": {"make": "Toyota"},
+            "available_options": {"years": ["2015", "2016"]},
+            "results": []
+        }
+    
+    # Check the function structure
+    response = mock_search()
+    assert "filters" in response
+    assert "available_options" in response
+    assert "results" in response

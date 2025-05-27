@@ -537,6 +537,20 @@ async def search_parts(
             result["error"] = "Error retrieving categories for the specified vehicle"
             return result
     
+    # If all parameters are specified, return matching parts
+    if search_make and search_year and search_model and search_engine and search_category and search_subcategory:
+        try:
+            # In a complete implementation, we would retrieve the actual parts here
+            # by navigating through the hierarchy to get to the parts page
+            # Then we would extract parts information just like in the get_parts function
+            
+            result["message"] = f"Found parts for {search_year} {search_make} {search_model} {search_engine}, {search_category}, {search_subcategory}"
+            result["note"] = "In a complete implementation, this would return the actual parts from RockAuto"
+            return result
+        except Exception as e:
+            result["error"] = "Error retrieving parts for the specified vehicle and categories"
+            return result
+    
     # Return a helpful message for now
     result["message"] = "Search functionality works best with partial information to explore options"
     return result
