@@ -6,7 +6,8 @@ from typing import Optional, List, Dict
 import random
 
 import mechanize
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup  # Keep for backward compatibility during transition
+from selectolax.parser import HTMLParser
 import html5lib
 
 import requests
@@ -46,17 +47,21 @@ async def get_makes():
 
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+    parser = HTMLParser(page_content)
+    nav_nodes = parser.css('div.ranavnode')
     soup_filter = []
 
     # Find US Market Only
-    for x in soup:
-        if 'US' in next(x.children)['value']:
-            soup_filter.append( x.find('a', attrs={'class', 'navlabellink'}) )
+    for x in nav_nodes:
+        first_child = x.child
+        if first_child and 'US' in first_child.attrs.get('value', ''):
+            nav_link = x.css_first('a.navlabellink')
+            if nav_link:
+                soup_filter.append(nav_link)
 
     # Get [Make, Year, Model, Link]
     for x in soup_filter:
-        makes_list.append( {'make': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
+        makes_list.append({'make': x.text(), 'link': 'https://www.rockauto.com' + x.attrs.get('href', '')})
 
     return makes_list
 
