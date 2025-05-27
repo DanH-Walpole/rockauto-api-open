@@ -91,8 +91,6 @@ async def get_years( search_make: str, search_link: str ):
 
     return years_list
 
-    return years_list
-
 @rockauto_api.get("/years/{search_vehicle}")
 async def get_models( search_make: str, search_year: str, search_link: str ):
     models_list = []
@@ -101,17 +99,21 @@ async def get_models( search_make: str, search_year: str, search_link: str ):
     page_content = browser.open( search_link ).read()
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
+    parser = HTMLParser(page_content)
+    nav_nodes = parser.css('div.ranavnode')[2:] # Skip first two elements
     soup_filter = []
 
     # Find US Market Only
-    for x in soup:
-        if 'US' in next(x.children)['value']:
-            soup_filter.append( x.find('a', attrs={'class', 'navlabellink'}) )
+    for x in nav_nodes:
+        input_elem = x.css_first('input')
+        if input_elem and 'US' in input_elem.attrs.get('value', ''):
+            nav_link = x.css_first('a.navlabellink')
+            if nav_link:
+                soup_filter.append(nav_link)
 
     # Get [Make, Year, Model, Link]
     for x in soup_filter:
-        models_list.append( {'make': search_make, 'year': search_year, 'model': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
+        models_list.append({'make': search_make, 'year': search_year, 'model': x.text(), 'link': 'https://www.rockauto.com' + x.attrs.get('href', '')})
 
     return models_list
 
@@ -123,17 +125,21 @@ async def get_engines( search_make: str, search_year: str, search_model: str, se
     page_content = browser.open( search_link ).read()
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
+    parser = HTMLParser(page_content)
+    nav_nodes = parser.css('div.ranavnode')[3:] # Skip first three elements
     soup_filter = []
 
     # Find US Market Only
-    for x in soup:
-        if 'US' in next(x.children)['value']:
-            soup_filter.append( x.find('a', attrs={'class', 'navlabellink'}) )
+    for x in nav_nodes:
+        input_elem = x.css_first('input')
+        if input_elem and 'US' in input_elem.attrs.get('value', ''):
+            nav_link = x.css_first('a.navlabellink')
+            if nav_link:
+                soup_filter.append(nav_link)
 
     # Get [Make, Year, Model, Link]
     for x in soup_filter:
-        engines_list.append( {'make': search_make, 'year': search_year, 'model': search_model, 'engine': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
+        engines_list.append({'make': search_make, 'year': search_year, 'model': search_model, 'engine': x.text(), 'link': 'https://www.rockauto.com' + x.attrs.get('href', '')})
     
     return engines_list
 
