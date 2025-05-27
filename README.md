@@ -177,15 +177,24 @@ Returns closeout deals for a specific vehicle using its carcode.
 
 #### Search for Parts and Vehicles
 ```
-GET /search?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_subcategory=Pads
+GET /search?search_make=LAND%20ROVER&search_year=2003&search_model=DISCOVERY&search_engine=4.6L%20V8&search_category=Cooling%20System&search_subcategory=Radiator
 ```
 A flexible search endpoint that allows incremental exploration of vehicles and parts. Parameters are optional and the response includes available options for missing parameters.
 
+The search endpoint supports the following parameters:
+- `search_make` - Vehicle make (e.g., LAND ROVER)
+- `search_year` - Vehicle year (e.g., 2003)
+- `search_model` - Vehicle model (e.g., DISCOVERY)
+- `search_engine` - Engine type (e.g., 4.6L V8)
+- `search_category` - Part category (e.g., Cooling System)
+- `search_subcategory` - Part subcategory (e.g., Radiator)
+- `search_part_type` - Specific part type code
+
 Examples:
 - `/search` - Returns a list of all available makes
-- `/search?search_make=Toyota` - Returns available years for Toyota vehicles
-- `/search?search_make=Toyota&search_year=2015` - Returns available models for 2015 Toyota vehicles
-- `/search?search_make=Toyota&search_year=2015&search_model=Camry` - Returns available engines for 2015 Toyota Camry
+- `/search?search_make=LAND%20ROVER` - Returns available years for Land Rover vehicles
+- `/search?search_make=LAND%20ROVER&search_year=2003` - Returns available models for 2003 Land Rover vehicles
+- `/search?search_make=LAND%20ROVER&search_year=2003&search_model=DISCOVERY` - Returns available engines for 2003 Land Rover Discovery
 
 #### Get Vehicle Information
 ```
