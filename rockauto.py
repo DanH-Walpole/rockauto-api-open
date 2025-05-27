@@ -529,26 +529,350 @@ async def search_parts(
     if search_make and search_year and search_model and search_engine and not search_category:
         try:
             # We need to navigate through the hierarchy to get to the categories
-            # This would require navigating through make -> year -> model -> engine links
-            # For simplicity, this implementation is truncated
-            result["error"] = "Complete implementation would navigate through hierarchy to get categories"
+            # First get make link
+            page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+            make_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not make_link:
+                result["error"] = f"Make '{search_make}' not found"
+                return result
+            
+            # Get year link
+            page_content = browser.open(make_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
+            year_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text() == search_year:
+                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not year_link:
+                result["error"] = f"Year '{search_year}' not found for make '{search_make}'"
+                return result
+                
+            # Get model link
+            page_content = browser.open(year_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
+            model_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not model_link:
+                result["error"] = f"Model '{search_model}' not found for {search_year} {search_make}"
+                return result
+            
+            # Get engine link
+            page_content = browser.open(model_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
+            engine_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_engine.lower():
+                        engine_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not engine_link:
+                result["error"] = f"Engine '{search_engine}' not found for {search_year} {search_make} {search_model}"
+                return result
+            
+            # Now get categories for this make, year, model, and engine
+            page_content = browser.open(engine_link).read()
+            browser.close()
+            
+            # Categories are typically found as 'a' elements with 'navlabellink' class after the engines section
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
+            categories_list = []
+            
+            for x in soup:
+                categories_list.append({
+                    'make': search_make,
+                    'year': search_year,
+                    'model': search_model,
+                    'engine': search_engine,
+                    'category': x.get_text(),
+                    'link': 'https://www.rockauto.com' + str(x.get('href'))
+                })
+            
+            result["available_options"]["categories"] = categories_list
             return result
         except Exception as e:
-            result["error"] = "Error retrieving categories for the specified vehicle"
+            result["error"] = f"Error retrieving categories for the specified vehicle: {str(e)}"
+            return result
+    
+    # If we have make, year, model, engine, category but no subcategory, return available subcategories
+    if search_make and search_year and search_model and search_engine and search_category and not search_subcategory:
+        try:
+            # We need to navigate through the hierarchy to get to the subcategories
+            # First get make link
+            page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+            make_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not make_link:
+                result["error"] = f"Make '{search_make}' not found"
+                return result
+            
+            # Get year link
+            page_content = browser.open(make_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
+            year_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text() == search_year:
+                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not year_link:
+                result["error"] = f"Year '{search_year}' not found for make '{search_make}'"
+                return result
+                
+            # Get model link
+            page_content = browser.open(year_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
+            model_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not model_link:
+                result["error"] = f"Model '{search_model}' not found for {search_year} {search_make}"
+                return result
+            
+            # Get engine link
+            page_content = browser.open(model_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
+            engine_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_engine.lower():
+                        engine_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not engine_link:
+                result["error"] = f"Engine '{search_engine}' not found for {search_year} {search_make} {search_model}"
+                return result
+            
+            # Get category link
+            page_content = browser.open(engine_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
+            category_link = None
+            
+            for x in soup:
+                if x.get_text().lower() == search_category.lower():
+                    category_link = 'https://www.rockauto.com' + str(x.get('href'))
+                    break
+            
+            if not category_link:
+                result["error"] = f"Category '{search_category}' not found for {search_year} {search_make} {search_model} {search_engine}"
+                return result
+            
+            # Now get subcategories for this make, year, model, engine, and category
+            page_content = browser.open(category_link).read()
+            browser.close()
+            
+            # Subcategories are typically found as 'a' elements with 'navlabellink' class after the categories section
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[5:]
+            subcategories_list = []
+            
+            for x in soup:
+                subcategories_list.append({
+                    'make': search_make,
+                    'year': search_year,
+                    'model': search_model,
+                    'engine': search_engine,
+                    'category': search_category,
+                    'subcategory': x.get_text(),
+                    'link': 'https://www.rockauto.com' + str(x.get('href'))
+                })
+            
+            result["available_options"]["subcategories"] = subcategories_list
+            return result
+        except Exception as e:
+            result["error"] = f"Error retrieving subcategories for the specified vehicle and category: {str(e)}"
             return result
     
     # If all parameters are specified, return matching parts
     if search_make and search_year and search_model and search_engine and search_category and search_subcategory:
         try:
-            # In a complete implementation, we would retrieve the actual parts here
-            # by navigating through the hierarchy to get to the parts page
-            # Then we would extract parts information just like in the get_parts function
+            # We need to navigate through the hierarchy to get to the parts
+            # First get make link
+            page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+            make_link = None
             
-            result["message"] = f"Found parts for {search_year} {search_make} {search_model} {search_engine}, {search_category}, {search_subcategory}"
-            result["note"] = "In a complete implementation, this would return the actual parts from RockAuto"
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not make_link:
+                result["error"] = f"Make '{search_make}' not found"
+                return result
+            
+            # Get year link
+            page_content = browser.open(make_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
+            year_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text() == search_year:
+                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not year_link:
+                result["error"] = f"Year '{search_year}' not found for make '{search_make}'"
+                return result
+                
+            # Get model link
+            page_content = browser.open(year_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
+            model_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not model_link:
+                result["error"] = f"Model '{search_model}' not found for {search_year} {search_make}"
+                return result
+            
+            # Get engine link
+            page_content = browser.open(model_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
+            engine_link = None
+            
+            for x in soup:
+                if 'US' in next(x.children)['value']:
+                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
+                    if link_elem and link_elem.get_text().lower() == search_engine.lower():
+                        engine_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+                        break
+            
+            if not engine_link:
+                result["error"] = f"Engine '{search_engine}' not found for {search_year} {search_make} {search_model}"
+                return result
+            
+            # Get category link
+            page_content = browser.open(engine_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
+            category_link = None
+            
+            for x in soup:
+                if x.get_text().lower() == search_category.lower():
+                    category_link = 'https://www.rockauto.com' + str(x.get('href'))
+                    break
+            
+            if not category_link:
+                result["error"] = f"Category '{search_category}' not found for {search_year} {search_make} {search_model} {search_engine}"
+                return result
+            
+            # Get subcategory link
+            page_content = browser.open(category_link).read()
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[5:]
+            subcategory_link = None
+            
+            for x in soup:
+                if x.get_text().lower() == search_subcategory.lower():
+                    subcategory_link = 'https://www.rockauto.com' + str(x.get('href'))
+                    break
+            
+            if not subcategory_link:
+                result["error"] = f"Subcategory '{search_subcategory}' not found for {search_year} {search_make} {search_model} {search_engine} {search_category}"
+                return result
+            
+            # Now get parts for this make, year, model, engine, category, and subcategory
+            page_content = browser.open(subcategory_link).read()
+            browser.close()
+            
+            # Find parts table rows
+            soup = BeautifulSoup(page_content, features='html5lib')
+            part_rows = soup.find_all('tr', attrs={'class': 'listing-inner-row'})
+            
+            parts_list = []
+            
+            for row in part_rows:
+                try:
+                    # Get manufacturer
+                    manufacturer_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'})
+                    manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
+                    
+                    # Get part number
+                    part_number_elem = row.find('span', attrs={'class': 'listing-final-partnumber'})
+                    part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
+                    
+                    # Get price
+                    price_elem = row.find('span', attrs={'class': 'listing-price'})
+                    price = price_elem.get_text().strip() if price_elem else "N/A"
+                    
+                    # Get part notes/info
+                    info_elem = row.find('div', attrs={'class': 'listing-text-row'})
+                    info = info_elem.get_text().strip() if info_elem else "N/A"
+                    
+                    # Get more info link if available
+                    link_elem = row.find('a', attrs={'class': 'more-info-link'})
+                    more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
+                    
+                    parts_list.append({
+                        'make': search_make,
+                        'year': search_year,
+                        'model': search_model,
+                        'engine': search_engine,
+                        'category': search_category,
+                        'subcategory': search_subcategory,
+                        'manufacturer': manufacturer,
+                        'part_number': part_number,
+                        'price': price,
+                        'info': info,
+                        'more_info_link': more_info_link
+                    })
+                except Exception as e:
+                    # Skip any parts with parsing issues
+                    continue
+            
+            result["results"] = parts_list
             return result
         except Exception as e:
-            result["error"] = "Error retrieving parts for the specified vehicle and categories"
+            result["error"] = f"Error retrieving parts for the specified vehicle and categories: {str(e)}"
             return result
     
     # Return a helpful message for now
