@@ -107,6 +107,7 @@ def test_search_endpoint_with_part_type():
                     "part_type_code": "2172",
                     "manufacturer": "NISSENS",
                     "part_number": "64313A",
+                    "price": "$181.79",
                     "info": "Some part information"
                 }
             ]
@@ -125,4 +126,5 @@ def test_search_endpoint_with_part_type():
         assert "manufacturer" in part
         assert "part_number" in part
         assert "part_type_code" in part
+        assert "price" in part
         assert part["part_type_code"] == response["filters"]["part_type"]
