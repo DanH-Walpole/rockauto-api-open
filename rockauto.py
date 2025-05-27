@@ -73,17 +73,23 @@ async def get_years( search_make: str, search_link: str ):
     page_content = browser.open( search_link ).read()
     browser.close()
 
-    soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
+    parser = HTMLParser(page_content)
+    nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
     soup_filter = []
 
     # Find US Market Only
-    for x in soup:
-        if 'US' in next(x.children)['value']:
-            soup_filter.append( x.find('a', attrs={'class', 'navlabellink'}) )
+    for x in nav_nodes:
+        input_elem = x.css_first('input')
+        if input_elem and 'US' in input_elem.attrs.get('value', ''):
+            nav_link = x.css_first('a.navlabellink')
+            if nav_link:
+                soup_filter.append(nav_link)
 
     # Get [Make, Year, Model, Link]
     for x in soup_filter:
-        years_list.append( {'make': search_make, 'year': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
+        years_list.append({'make': search_make, 'year': x.text(), 'link': 'https://www.rockauto.com' + x.attrs.get('href', '')})
+
+    return years_list
 
     return years_list
 
