@@ -32,13 +32,15 @@
 <br />
 <p align="center">
   <a href="https://github.com/DanH-Walpole/rockauto-api-open">
-    <img src="images/RockAutoAPI.png" alt="Logo" height="350">
+    <img src="images/rockaut-api-open.png" alt="Logo" height="350">
   </a>
 
   <h3 align="center">Unofficial RockAuto API</h3>
 
   <p align="center">
-    Unofficial RockAuto API for auto enthusiasts to easily access catalog data
+    An unofficial RockAuto API that extends and carries on the work of the original creator
+    <br />
+    This project is not associated with RockAuto LLC
     <br />
     <a href="https://github.com/DanH-Walpole/rockauto-api-open"><strong>Explore the docs »</strong></a>
     <br />
@@ -69,45 +71,46 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#api-endpoints">API Endpoints</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
+    <!-- <li><a href="#contributing">Contributing</a></li> -->
+    <!-- <li><a href="#license">License</a></li> -->
     <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
 </details>
-
 
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-The Unofficial RockAuto API is a dedicated tool for auto enthusiasts that allows programmatic access to RockAuto's catalog data. This API is not affiliated with or endorsed by RockAuto LLC.
+This project is an unofficial API for interacting with RockAuto's automotive parts catalog. It provides a programmatic way to access vehicle makes, models, years, engines, and parts categories.
 
-### Key Features
+### Project Purpose
 
-* Browse vehicle makes, models, years, and engines
-* Find specific parts with details including price and manufacturer information
-* Access closeout deals for specific vehicles
-* Get detailed vehicle information for enthusiasts
+This repository is a continuation and extension of the original rockauto_api work. Our goal is to:
+
+1. Maintain and improve the existing functionality
+2. Add new features and capabilities
+3. Make the API more accessible and well-documented
+4. Build a community around this open-source project
 
 ### Built With
 
-* [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework for building APIs
-* [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) - Web scraping library
-* [Mechanize](https://mechanize.readthedocs.io/) - Library for automated web browsing
+* [FastAPI](https://fastapi.tiangolo.com/) - Modern, fast web framework for building APIs
+* [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) - Web scraping library
+* [Mechanize](https://mechanize.readthedocs.io/) - Automated web browser navigation
 
 
 
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running, follow these steps:
+To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
-* Python 3.7+
-* pip
+* Python 3.6+
+* pip (Python package installer)
 
 ### Installation
 
@@ -119,125 +122,57 @@ To get a local copy up and running, follow these steps:
    ```sh
    pip install -r requirements.txt
    ```
-3. Install FastAPI and Uvicorn (if not already installed)
-   ```sh
-   pip install fastapi uvicorn
-   ```
-4. Run the API
+3. Run the FastAPI server
    ```sh
    uvicorn rockauto:rockauto_api --reload
    ```
 
 
-
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-The RockAuto API allows you to access vehicle and parts data programmatically. Here are some example use cases:
+The API provides several endpoints to navigate RockAuto's parts catalog:
 
-* Integration with car maintenance applications
-* Building custom part catalogs for auto shops
-* Creating vehicle information lookup tools
-* Finding the best deals on parts through the closeouts endpoint
+* `/makes` - Get all vehicle makes
+* `/years/{search_vehicle}` - Get years for a specific make
+* `/models/{search_vehicle}` - Get models for a specific make and year
+* `/engines/{search_vehicle}` - Get engines for a specific make, year, and model
+* `/categories/{search_vehicle}` - Get part categories for a specific vehicle
 
-
-
-<!-- API ENDPOINTS -->
-## API Endpoints
-
-### Base URL
-```
-http://localhost:8000
-```
-
-### Available Endpoints
-
-#### Get API Information
-```
-GET /
-```
-Returns an overview of available endpoints.
-
-#### List Vehicle Makes
-```
-GET /makes
-```
-Returns a list of all vehicle makes available in the RockAuto catalog.
-
-#### Get Years for a Make
-```
-GET /years/{search_vehicle}?search_make=Toyota&search_link={link}
-```
-Returns available years for the specified make.
-
-#### Get Models for a Year
-```
-GET /models/{search_vehicle}?search_make=Toyota&search_year=2015&search_link={link}
-```
-Returns available models for the specified make and year.
-
-#### Get Engines for a Model
-```
-GET /engines/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_link={link}
-```
-Returns available engines for the specified model.
-
-#### Get Part Categories
-```
-GET /categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
-```
-Returns part categories for the specified vehicle.
-
-#### Get Sub-Categories
-```
-GET /sub_categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_link={link}
-```
-Returns sub-categories within a part category.
-
-#### Get Parts List
-```
-GET /parts/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_subcategory=Pads&search_link={link}
-```
-Returns a list of parts with details including price, manufacturer, and notes.
-
-#### Get Closeout Deals
-```
-GET /closeouts/{carcode}
-```
-Returns closeout deals for a specific vehicle using its carcode.
-
-#### Get Vehicle Information
-```
-GET /vehicle_info/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
-```
-Returns detailed vehicle information including assembly details and specifications.
+_For more examples and API documentation, run the server and visit `http://localhost:8000/docs`_
 
 
 
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/DanH-Walpole/rockauto-api-open/issues) for a list of proposed features and known issues.
+See the [open issues](https://github.com/DanH-Walpole/rockauto-api-open/issues) for a list of proposed features (and known issues).
+
+Planned improvements include:
+- Enhanced documentation
+- More comprehensive error handling
+- Additional endpoints for specific part information
+- Performance optimizations
 
 
 
 <!-- CONTRIBUTING -->
-## Contributing
+<!-- ## Contributing -->
 
-Contributions make the open source community an amazing place to learn, inspire, and create. Any contributions are **greatly appreciated**.
+<!-- Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**. -->
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+<!-- 1. Fork the Project -->
+<!-- 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`) -->
+<!-- 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`) -->
+<!-- 4. Push to the Branch (`git push origin feature/AmazingFeature`) -->
+<!-- 5. Open a Pull Request -->
 
 
 
 <!-- LICENSE -->
-## License
+<!-- ## License -->
 
-This project is not currently licensed and is provided for educational purposes only. Use at your own risk.
+<!-- Distributed under the MIT License. See `LICENSE` for more information. -->
 
 
 
@@ -245,6 +180,17 @@ This project is not currently licensed and is provided for educational purposes 
 ## Contact
 
 Project Link: [https://github.com/DanH-Walpole/rockauto-api-open](https://github.com/DanH-Walpole/rockauto-api-open)
+
+
+
+<!-- ACKNOWLEDGEMENTS -->
+## Acknowledgements
+
+* [ocastaneda3](https://github.com/ocastaneda3) - Original creator of the rockauto_api project
+* This project extends and continues the work of the original creator
+* Thanks to all contributors who help improve this project
+
+
 
 
 
@@ -259,4 +205,4 @@ Project Link: [https://github.com/DanH-Walpole/rockauto-api-open](https://github
 [issues-shield]: https://img.shields.io/github/issues/DanH-Walpole/rockauto-api-open.svg?style=for-the-badge
 [issues-url]: https://github.com/DanH-Walpole/rockauto-api-open/issues
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/danwalpole
+[linkedin-url]: https://linkedin.com/in/DanH-Walpole
