@@ -31,31 +31,27 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/ocastaneda3/rockauto_api">
+  <a href="https://github.com/DanH-Walpole/rockauto-api-open">
     <img src="images/RockAutoAPI.png" alt="Logo" height="350">
   </a>
 
   <h3 align="center">Unofficial RockAuto API</h3>
 
   <p align="center">
-    Unofficial RockAuto API developed my myself and not associated with RockAuto LLC
+    Unofficial RockAuto API for auto enthusiasts to easily access catalog data
     <br />
-    README In Porgress . . .
-    <br />
-    <a href="https://github.com/ocastaneda3/rockauto_api"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/DanH-Walpole/rockauto-api-open"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <!-- <a href="https://github.com/ocastaneda3/rockauto_api">View Demo</a> -->
-    <!-- · -->
-    <a href="https://github.com/ocastaneda3/rockauto_api/issues">Report Bug</a>
+    <a href="https://github.com/DanH-Walpole/rockauto-api-open/issues">Report Bug</a>
     ·
-    <a href="https://github.com/ocastaneda3/rockauto_api/issues">Request Feature</a>
+    <a href="https://github.com/DanH-Walpole/rockauto-api-open/issues">Request Feature</a>
   </p>
 </p>
 
 
 
-<!-- TABLE OF CONTENTS
+<!-- TABLE OF CONTENTS -->
 <details open="open">
   <summary><h2 style="display: inline-block">Table of Contents</h2></summary>
   <ol>
@@ -73,125 +69,194 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#api-endpoints">API Endpoints</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
-    <!-- <li><a href="#contributing">Contributing</a></li>
-    <!-- <li><a href="#license">License</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <!-- <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
-</details> -->
+</details>
 
 
 
 <!-- ABOUT THE PROJECT -->
-<!-- ## About The Project -->
+## About The Project
 
-<!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
+The Unofficial RockAuto API is a dedicated tool for auto enthusiasts that allows programmatic access to RockAuto's catalog data. This API is not affiliated with or endorsed by RockAuto LLC.
 
-<!-- Here's a blank template to get started: -->
-<!-- **To avoid retyping too much info. Do a search and replace with your text editor for the following:** -->
-<!-- `github_username`, `repo_name`, `twitter_handle`, `email`, `project_title`, `project_description` -->
+### Key Features
 
+* Browse vehicle makes, models, years, and engines
+* Find specific parts with details including price and manufacturer information
+* Access closeout deals for specific vehicles
+* Get detailed vehicle information for enthusiasts
 
-<!-- ### Built With -->
+### Built With
 
-<!-- * []() -->
-<!-- * []() -->
-<!-- * []() -->
+* [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework for building APIs
+* [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) - Web scraping library
+* [Mechanize](https://mechanize.readthedocs.io/) - Library for automated web browsing
 
 
 
 <!-- GETTING STARTED -->
-<!--## Getting Started -->
+## Getting Started
 
-<!--To get a local copy up and running follow these simple steps. -->
+To get a local copy up and running, follow these steps:
 
-<!--### Prerequisites -->
+### Prerequisites
 
-<!--This is an example of how to list things you need to use the software and how to install them.
-<!--* npm -->
-<!--  ```sh
-  npm install npm@latest -g
-  ``` -->
+* Python 3.7+
+* pip
 
-<!-- ### Installation -->
+### Installation
 
-<!-- 1. Clone the repo -->
-<!--    ```sh
-   git clone https://github.com/ocastaneda3/rockauto_api.git
-   ``` -->
-<!-- 2. Install NPM packages -->
-<!--    ```sh
-   npm install
-   ``` -->
+1. Clone the repo
+   ```sh
+   git clone https://github.com/DanH-Walpole/rockauto-api-open.git
+   ```
+2. Install Python packages
+   ```sh
+   pip install -r requirements.txt
+   ```
+3. Install FastAPI and Uvicorn (if not already installed)
+   ```sh
+   pip install fastapi uvicorn
+   ```
+4. Run the API
+   ```sh
+   uvicorn rockauto:rockauto_api --reload
+   ```
 
 
 
 <!-- USAGE EXAMPLES -->
-<!-- ## Usage -->
+## Usage
 
-<!-- Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources. -->
+The RockAuto API allows you to access vehicle and parts data programmatically. Here are some example use cases:
 
-<!-- _For more examples, please refer to the [Documentation](https://example.com)_ -->
+* Integration with car maintenance applications
+* Building custom part catalogs for auto shops
+* Creating vehicle information lookup tools
+* Finding the best deals on parts through the closeouts endpoint
+
+
+
+<!-- API ENDPOINTS -->
+## API Endpoints
+
+### Base URL
+```
+http://localhost:8000
+```
+
+### Available Endpoints
+
+#### Get API Information
+```
+GET /
+```
+Returns an overview of available endpoints.
+
+#### List Vehicle Makes
+```
+GET /makes
+```
+Returns a list of all vehicle makes available in the RockAuto catalog.
+
+#### Get Years for a Make
+```
+GET /years/{search_vehicle}?search_make=Toyota&search_link={link}
+```
+Returns available years for the specified make.
+
+#### Get Models for a Year
+```
+GET /models/{search_vehicle}?search_make=Toyota&search_year=2015&search_link={link}
+```
+Returns available models for the specified make and year.
+
+#### Get Engines for a Model
+```
+GET /engines/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_link={link}
+```
+Returns available engines for the specified model.
+
+#### Get Part Categories
+```
+GET /categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
+```
+Returns part categories for the specified vehicle.
+
+#### Get Sub-Categories
+```
+GET /sub_categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_link={link}
+```
+Returns sub-categories within a part category.
+
+#### Get Parts List
+```
+GET /parts/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_subcategory=Pads&search_link={link}
+```
+Returns a list of parts with details including price, manufacturer, and notes.
+
+#### Get Closeout Deals
+```
+GET /closeouts/{carcode}
+```
+Returns closeout deals for a specific vehicle using its carcode.
+
+#### Get Vehicle Information
+```
+GET /vehicle_info/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
+```
+Returns detailed vehicle information including assembly details and specifications.
 
 
 
 <!-- ROADMAP -->
-<!-- ## Roadmap -->
+## Roadmap
 
-<!-- See the [open issues](https://github.com/ocastaneda3/rockauto_api/issues) for a list of proposed features (and known issues). -->
+See the [open issues](https://github.com/DanH-Walpole/rockauto-api-open/issues) for a list of proposed features and known issues.
 
 
 
 <!-- CONTRIBUTING -->
-<!-- ## Contributing -->
+## Contributing
 
-<!-- Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**. -->
+Contributions make the open source community an amazing place to learn, inspire, and create. Any contributions are **greatly appreciated**.
 
-<!-- 1. Fork the Project -->
-<!-- 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`) -->
-<!-- 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`) -->
-<!-- 4. Push to the Branch (`git push origin feature/AmazingFeature`) -->
-<!-- 5. Open a Pull Request -->
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 
 
 <!-- LICENSE -->
-<!-- ## License -->
+## License
 
-<!-- Distributed under the MIT License. See `LICENSE` for more information. -->
+This project is not currently licensed and is provided for educational purposes only. Use at your own risk.
 
 
 
 <!-- CONTACT -->
-<!-- ## Contact -->
+## Contact
 
-<!-- Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email -->
-
-<!-- Project Link: [https://github.com/ocastaneda3/rockauto_api](https://github.com/ocastaneda3/rockauto_api) -->
-
-
-
-<!-- ACKNOWLEDGEMENTS -->
-<!-- ## Acknowledgements -->
-
-<!-- * []() -->
-<!-- * []() -->
-<!-- * []() -->
-
-
+Project Link: [https://github.com/DanH-Walpole/rockauto-api-open](https://github.com/DanH-Walpole/rockauto-api-open)
 
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/ocastaneda3/rockauto_api.svg?style=for-the-badge
-[contributors-url]: https://github.com/ocastaneda3/rockauto_api/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/ocastaneda3/rockauto_api.svg?style=for-the-badge
-[forks-url]: https://github.com/ocastaneda3/rockauto_api/network/members
-[stars-shield]: https://img.shields.io/github/stars/ocastaneda3/rockauto_api.svg?style=for-the-badge
-[stars-url]: https://github.com/ocastaneda3/rockauto_api/stargazers
-[issues-shield]: https://img.shields.io/github/issues/ocastaneda3/rockauto_api.svg?style=for-the-badge
-[issues-url]: https://github.com/ocastaneda3/rockauto_api/issues
+[contributors-shield]: https://img.shields.io/github/contributors/DanH-Walpole/rockauto-api-open.svg?style=for-the-badge
+[contributors-url]: https://github.com/DanH-Walpole/rockauto-api-open/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/DanH-Walpole/rockauto-api-open.svg?style=for-the-badge
+[forks-url]: https://github.com/DanH-Walpole/rockauto-api-open/network/members
+[stars-shield]: https://img.shields.io/github/stars/DanH-Walpole/rockauto-api-open.svg?style=for-the-badge
+[stars-url]: https://github.com/DanH-Walpole/rockauto-api-open/stargazers
+[issues-shield]: https://img.shields.io/github/issues/DanH-Walpole/rockauto-api-open.svg?style=for-the-badge
+[issues-url]: https://github.com/DanH-Walpole/rockauto-api-open/issues
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/ocastaneda3
+[linkedin-url]: https://linkedin.com/in/danwalpole
