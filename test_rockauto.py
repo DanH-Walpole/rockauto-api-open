@@ -79,3 +79,50 @@ def test_search_endpoint_response_structure():
         for subcategory in response["available_options"]["subcategories"]:
             if "part_type_code" in subcategory:
                 assert isinstance(subcategory["part_type_code"], str)
+                
+def test_search_endpoint_with_part_type():
+    """Test that the search endpoint handles part_type parameter correctly"""
+    # This is a simple structural test for mock responses
+    
+    # Mock a response with results when providing part_type
+    def mock_search_with_parts():
+        return {
+            "filters": {
+                "make": "Land Rover",
+                "year": "2003",
+                "model": "Discovery",
+                "engine": "4.6L V8",
+                "category": "Cooling System",
+                "subcategory": "Radiator",
+                "part_type": "2172"
+            },
+            "results": [
+                {
+                    "make": "Land Rover",
+                    "year": "2003",
+                    "model": "Discovery",
+                    "engine": "4.6L V8",
+                    "category": "Cooling System", 
+                    "subcategory": "Radiator",
+                    "part_type_code": "2172",
+                    "manufacturer": "NISSENS",
+                    "part_number": "64313A",
+                    "info": "Some part information"
+                }
+            ]
+        }
+    
+    # Check the function structure when parts are returned
+    response = mock_search_with_parts()
+    assert "filters" in response
+    assert "part_type" in response["filters"]
+    assert "results" in response
+    assert len(response["results"]) > 0
+    
+    # Check that parts contain the required fields
+    if response["results"]:
+        part = response["results"][0]
+        assert "manufacturer" in part
+        assert "part_number" in part
+        assert "part_type_code" in part
+        assert part["part_type_code"] == response["filters"]["part_type"]

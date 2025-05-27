@@ -840,54 +840,155 @@ async def search_parts(
                 result["error"] = f"Specified part type code '{search_part_type}' doesn't match the code for this subcategory"
                 return result
             
-            # Now get parts for this make, year, model, engine, category, and subcategory
-            page_content = browser.open(subcategory_link).read()
+            # Customize URL if part_type is provided
+            if search_part_type:
+                # Ensure we use the part_type code in the URL
+                base_url = "https://www.rockauto.com/en/catalog/"
+                url_parts = [
+                    search_make.lower().replace(' ', '+'),
+                    search_year,
+                    search_model.lower().replace(' ', '+'),
+                    search_engine.lower().replace(' ', '+'),
+                    "", # Placeholder for car code which we don't have
+                    search_category.lower().replace(' ', '+'),
+                    search_subcategory.lower().replace(' ', '+'),
+                    search_part_type
+                ]
+                
+                # Try to find the car code from the subcategory_link
+                link_parts = subcategory_link.split('/')
+                if len(link_parts) >= 6:
+                    for part in link_parts:
+                        if part.isdigit() and len(part) > 5:  # Car codes are usually long numeric IDs
+                            url_parts[4] = part
+                            break
+                
+                # Construct the direct URL to the parts page
+                parts_url = base_url + ",".join(url_parts)
+                page_content = browser.open(parts_url).read()
+            else:
+                # Use the subcategory link as before
+                page_content = browser.open(subcategory_link).read()
+            
             browser.close()
             
             # Find parts table rows
             soup = BeautifulSoup(page_content, features='html5lib')
-            part_rows = soup.find_all('tr', attrs={'class': 'listing-inner-row'})
+            
+            # First, look for parts listings
+            # RockAuto uses various classes for parts listings
+            part_containers = []
+            
+            # Try to find listing containers first
+            part_containers.extend(soup.find_all('div', attrs={'class': 'listing-container'}))
+            
+            # If no containers, try direct part rows 
+            if not part_containers:
+                part_rows = soup.find_all('tr', attrs={'class': 'listing-inner-row'})
+                # If we found rows, create a dummy container to process them
+                if part_rows:
+                    part_containers = [soup]
             
             parts_list = []
             
-            for row in part_rows:
-                try:
-                    # Get manufacturer
-                    manufacturer_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'})
-                    manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
-                    
-                    # Get part number
-                    part_number_elem = row.find('span', attrs={'class': 'listing-final-partnumber'})
-                    part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
-                    
-                    # Get price
-                    price_elem = row.find('span', attrs={'class': 'listing-price'})
-                    price = price_elem.get_text().strip() if price_elem else "N/A"
-                    
-                    # Get part notes/info
-                    info_elem = row.find('div', attrs={'class': 'listing-text-row'})
-                    info = info_elem.get_text().strip() if info_elem else "N/A"
-                    
-                    # Get more info link if available
-                    link_elem = row.find('a', attrs={'class': 'more-info-link'})
-                    more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
-                    
-                    parts_list.append({
-                        'make': search_make,
-                        'year': search_year,
-                        'model': search_model,
-                        'engine': search_engine,
-                        'category': search_category,
-                        'subcategory': search_subcategory,
-                        'manufacturer': manufacturer,
-                        'part_number': part_number,
-                        'price': price,
-                        'info': info,
-                        'more_info_link': more_info_link
-                    })
-                except Exception as e:
-                    # Skip any parts with parsing issues
-                    continue
+            # Process part containers
+            for container in part_containers:
+                # Get all part rows within this container
+                part_rows = container.find_all('tr', attrs={'class': 'listing-inner-row'}) or []
+                
+                # If we still don't have rows, try an alternative approach
+                if not part_rows:
+                    # Try to find parts by looking for manufacturer spans
+                    part_rows = container.find_all('div', attrs={'class': 'listing-text-row-moreinfo-truck'}) or []
+                
+                for row in part_rows:
+                    try:
+                        # Get manufacturer (multiple possible class names)
+                        manufacturer_elem = row.find('span', attrs={'class': lambda c: c and 'listing-final-manufacturer' in c})
+                        manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
+                        
+                        # Get part number (multiple possible class names)
+                        part_number_elem = row.find('span', attrs={'class': lambda c: c and 'listing-final-partnumber' in c})
+                        part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
+                        
+                        # Get price (try different selectors)
+                        price_elem = row.find('span', attrs={'class': 'listing-price'})
+                        if not price_elem:
+                            # Try to find price in parent or nearby elements
+                            price_row = row.find_parent('tr')
+                            if price_row:
+                                price_elem = price_row.find('span', attrs={'class': 'listing-price'})
+                        
+                        price = price_elem.get_text().strip() if price_elem else "N/A"
+                        
+                        # Get part notes/info
+                        info = row.get_text().strip()
+                        
+                        # Get more info link if available (try different selectors)
+                        link_elem = row.find('a', attrs={'class': 'ra-btn-moreinfo'}) or row.find('a', attrs={'class': 'more-info-link'})
+                        more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
+                        
+                        parts_list.append({
+                            'make': search_make,
+                            'year': search_year,
+                            'model': search_model,
+                            'engine': search_engine,
+                            'category': search_category,
+                            'subcategory': search_subcategory,
+                            'part_type_code': search_part_type,
+                            'manufacturer': manufacturer,
+                            'part_number': part_number,
+                            'price': price,
+                            'info': info,
+                            'more_info_link': more_info_link
+                        })
+                    except Exception as e:
+                        # Skip any parts with parsing issues
+                        continue
+            
+            # If we still don't have parts, try one more approach - look for all part information in the HTML
+            if not parts_list:
+                # Try to extract manufacturer and part numbers directly
+                manufacturers = soup.find_all('span', attrs={'class': lambda c: c and 'listing-final-manufacturer' in c})
+                part_numbers = soup.find_all('span', attrs={'class': lambda c: c and 'listing-final-partnumber' in c})
+                
+                # If we found manufacturers, try to build parts from them
+                for i, mfg in enumerate(manufacturers):
+                    try:
+                        manufacturer = mfg.get_text().strip()
+                        
+                        # Try to get the corresponding part number
+                        part_number = "N/A"
+                        if i < len(part_numbers):
+                            part_number = part_numbers[i].get_text().strip()
+                        
+                        # Try to find the container this manufacturer is in
+                        container = mfg.find_parent('div') or mfg.find_parent('tr')
+                        info = container.get_text().strip() if container else "N/A"
+                        
+                        # Try to find more info link
+                        link_elem = None
+                        if container:
+                            link_elem = container.find('a', href=lambda h: h and 'moreinfo.php' in h)
+                        
+                        more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
+                        
+                        parts_list.append({
+                            'make': search_make,
+                            'year': search_year,
+                            'model': search_model,
+                            'engine': search_engine,
+                            'category': search_category,
+                            'subcategory': search_subcategory,
+                            'part_type_code': search_part_type,
+                            'manufacturer': manufacturer,
+                            'part_number': part_number,
+                            'info': info,
+                            'more_info_link': more_info_link
+                        })
+                    except Exception as e:
+                        # Skip any parts with parsing issues
+                        continue
             
             result["results"] = parts_list
             return result
