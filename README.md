@@ -38,7 +38,7 @@
   <h3 align="center">Unofficial RockAuto API</h3>
 
   <p align="center">
-    Unofficial RockAuto API for auto enthusiasts to easily access catalog data
+    Unofficial RockAuto API for car nuts to easily access catalog data
     <br />
     <a href="https://github.com/DanH-Walpole/rockauto-api-open"><strong>Explore the docs »</strong></a>
     <br />
