@@ -32,7 +32,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/DanH-Walpole/rockauto-api-open">
-    <img src="images/rockauto-api-open.png" alt="Logo" height="350">
+    <img src="images/rockaut-api-open.png" alt="Logo" height="350">
   </a>
 
   <h3 align="center">Unofficial RockAuto API</h3>
