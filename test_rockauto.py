@@ -1,6 +1,6 @@
 import pytest
 import inspect
-from rockauto import rockauto_api, get_parts, get_closeout_deals, get_vehicle_info
+from rockauto import rockauto_api, get_parts, get_closeout_deals, get_vehicle_info, search_parts
 
 def test_endpoints_exist():
     """Test that the required endpoints exist in the API"""
@@ -10,6 +10,7 @@ def test_endpoints_exist():
     assert "/parts/{search_vehicle}" in routes
     assert "/closeouts/{carcode}" in routes
     assert "/vehicle_info/{search_vehicle}" in routes
+    assert "/search" in routes
     
 def test_parts_endpoint_structure():
     """Test that the parts endpoint function has the correct structure"""
@@ -37,3 +38,15 @@ def test_vehicle_info_endpoint_structure():
     ]
     for param in expected_params:
         assert param in params, f"Parameter {param} missing from get_vehicle_info function"
+
+def test_search_endpoint_structure():
+    """Test that the search endpoint function has the correct structure"""
+    # Check if the function has the expected parameters
+    params = inspect.signature(search_parts).parameters
+    expected_params = [
+        "search_make", "search_year", "search_model", "search_engine", 
+        "search_category", "search_subcategory"
+    ]
+    for param in expected_params:
+        assert param in params, f"Parameter {param} missing from search_parts function"
+        assert params[param].default is None, f"Parameter {param} should be optional"

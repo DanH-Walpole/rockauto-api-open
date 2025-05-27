@@ -206,6 +206,18 @@ GET /closeouts/{carcode}
 ```
 Returns closeout deals for a specific vehicle using its carcode.
 
+#### Search for Parts and Vehicles
+```
+GET /search?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_subcategory=Pads
+```
+A flexible search endpoint that allows incremental exploration of vehicles and parts. Parameters are optional and the response includes available options for missing parameters.
+
+Examples:
+- `/search` - Returns a list of all available makes
+- `/search?search_make=Toyota` - Returns available years for Toyota vehicles
+- `/search?search_make=Toyota&search_year=2015` - Returns available models for 2015 Toyota vehicles
+- `/search?search_make=Toyota&search_year=2015&search_model=Camry` - Returns available engines for 2015 Toyota Camry
+
 #### Get Vehicle Information
 ```
 GET /vehicle_info/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
