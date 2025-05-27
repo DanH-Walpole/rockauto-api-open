@@ -966,6 +966,18 @@ async def search_parts(
                         container = mfg.find_parent('div') or mfg.find_parent('tr')
                         info = container.get_text().strip() if container else "N/A"
                         
+                        # Try to find price in the container
+                        price = "N/A"
+                        if container:
+                            price_elem = container.find('span', attrs={'class': 'listing-price'})
+                            if not price_elem:
+                                # Look in parent row if available
+                                parent_row = container.find_parent('tr')
+                                if parent_row:
+                                    price_elem = parent_row.find('span', attrs={'class': 'listing-price'})
+                            
+                            price = price_elem.get_text().strip() if price_elem else "N/A"
+                        
                         # Try to find more info link
                         link_elem = None
                         if container:
@@ -983,6 +995,7 @@ async def search_parts(
                             'part_type_code': search_part_type,
                             'manufacturer': manufacturer,
                             'part_number': part_number,
+                            'price': price,
                             'info': info,
                             'more_info_link': more_info_link
                         })
