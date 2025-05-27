@@ -251,40 +251,40 @@ async def get_closeout_deals(carcode: str):
     page_content = browser.open(closeout_url).read()
     browser.close()
     
-    soup = BeautifulSoup(page_content, features='html5lib')
+    parser = HTMLParser(page_content)
     
     # Find all closeout items
-    closeout_sections = soup.find_all('div', attrs={'class': 'listing-container'})
+    closeout_sections = parser.css('div.listing-container')
     
     for section in closeout_sections:
         try:
             # Get category
-            category_elem = section.find('a', attrs={'class': 'listing-group-head'})
-            category = category_elem.get_text().strip() if category_elem else "N/A"
+            category_elem = section.css_first('a.listing-group-head')
+            category = category_elem.text().strip() if category_elem else "N/A"
             
             # Get deals in this category
-            deals = section.find_all('tr', attrs={'class': 'listing-inner-row'})
+            deals = section.css('tr.listing-inner-row')
             
             for deal in deals:
                 # Get manufacturer
-                manufacturer_elem = deal.find('span', attrs={'class': 'listing-final-manufacturer'})
-                manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
+                manufacturer_elem = deal.css_first('span.listing-final-manufacturer')
+                manufacturer = manufacturer_elem.text().strip() if manufacturer_elem else "N/A"
                 
                 # Get part number
-                part_number_elem = deal.find('span', attrs={'class': 'listing-final-partnumber'})
-                part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
+                part_number_elem = deal.css_first('span.listing-final-partnumber')
+                part_number = part_number_elem.text().strip() if part_number_elem else "N/A"
                 
                 # Get price
-                price_elem = deal.find('span', attrs={'class': 'listing-price'})
-                price = price_elem.get_text().strip() if price_elem else "N/A"
+                price_elem = deal.css_first('span.listing-price')
+                price = price_elem.text().strip() if price_elem else "N/A"
                 
                 # Get old price (if available)
-                old_price_elem = deal.find('span', attrs={'class': 'listing-oldprice'})
-                old_price = old_price_elem.get_text().strip() if old_price_elem else None
+                old_price_elem = deal.css_first('span.listing-oldprice')
+                old_price = old_price_elem.text().strip() if old_price_elem else None
                 
                 # Get part info
-                info_elem = deal.find('div', attrs={'class': 'listing-text-row'})
-                info = info_elem.get_text().strip() if info_elem else "N/A"
+                info_elem = deal.css_first('div.listing-text-row')
+                info = info_elem.text().strip() if info_elem else "N/A"
                 
                 closeout_deals.append({
                     'category': category,
@@ -349,17 +349,19 @@ async def search_parts(
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
             browser.close()
             
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             makes_list = []
             
             # Find US Market Only
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    make_link = x.find('a', attrs={'class', 'navlabellink'})
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    make_link = x.css_first('a.navlabellink')
                     if make_link:
                         makes_list.append({
-                            'make': make_link.get_text(),
-                            'link': 'https://www.rockauto.com' + str(make_link.get('href'))
+                            'make': make_link.text(),
+                            'link': 'https://www.rockauto.com' + make_link.attrs.get('href', '')
                         })
             
             result["available_options"]["makes"] = makes_list
@@ -373,14 +375,16 @@ async def search_parts(
         try:
             # Find the make's link first
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             make_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_make.lower():
-                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not make_link:
@@ -391,13 +395,15 @@ async def search_parts(
             page_content = browser.open(make_link).read()
             browser.close()
             
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
             years_list = []
             
             # Find US Market Only
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    year_link = x.find('a', attrs={'class', 'navlabellink'})
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    year_link = x.css_first('a.navlabellink')
                     if year_link:
                         years_list.append({
                             'make': search_make,
