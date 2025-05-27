@@ -488,7 +488,7 @@ async def search_parts(
             # We need to navigate through the hierarchy to get the model link
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
             make_link = None
             
             for x in soup:
@@ -504,7 +504,7 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
             year_link = None
             
             for x in soup:
@@ -520,7 +520,7 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
             model_link = None
             
             for x in soup:
@@ -538,7 +538,7 @@ async def search_parts(
             page_content = browser.open(model_link).read()
             browser.close()
             
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
             engines_list = []
             
             for x in soup:
@@ -565,7 +565,7 @@ async def search_parts(
             # We need to navigate through the hierarchy to get to the categories
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
             make_link = None
             
             for x in soup:
@@ -581,7 +581,7 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
             year_link = None
             
             for x in soup:
@@ -597,7 +597,7 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
             model_link = None
             
             for x in soup:
@@ -613,7 +613,7 @@ async def search_parts(
             
             # Get engine link
             page_content = browser.open(model_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
             engine_link = None
             
             for x in soup:
@@ -632,18 +632,17 @@ async def search_parts(
             browser.close()
             
             # Categories are typically found as 'a' elements with 'navlabellink' class after the engines section
-            parser = HTMLParser(page_content)
-            nav_links = parser.css('a.navlabellink')[4:] # Skip first four elements
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
             categories_list = []
             
-            for x in nav_links:
+            for x in soup:
                 categories_list.append({
                     'make': search_make,
                     'year': search_year,
                     'model': search_model,
                     'engine': search_engine,
-                    'category': x.text(),
-                    'link': 'https://www.rockauto.com' + x.attrs.get('href', '')
+                    'category': x.get_text(),
+                    'link': 'https://www.rockauto.com' + str(x.get('href'))
                 })
             
             result["available_options"]["categories"] = categories_list
@@ -658,7 +657,7 @@ async def search_parts(
             # We need to navigate through the hierarchy to get to the subcategories
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
             make_link = None
             
             for x in soup:
@@ -674,7 +673,7 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
             year_link = None
             
             for x in soup:
@@ -690,7 +689,7 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
             model_link = None
             
             for x in soup:
@@ -706,7 +705,7 @@ async def search_parts(
             
             # Get engine link
             page_content = browser.open(model_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
             engine_link = None
             
             for x in soup:
@@ -722,13 +721,12 @@ async def search_parts(
             
             # Get category link
             page_content = browser.open(engine_link).read()
-            parser = HTMLParser(page_content)
-            nav_links = parser.css('a.navlabellink')[4:] # Skip first four elements
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
             category_link = None
             
-            for x in nav_links:
-                if x.text().lower() == search_category.lower():
-                    category_link = 'https://www.rockauto.com' + x.attrs.get('href', '')
+            for x in soup:
+                if x.get_text().lower() == search_category.lower():
+                    category_link = 'https://www.rockauto.com' + str(x.get('href'))
                     break
             
             if not category_link:
@@ -740,12 +738,11 @@ async def search_parts(
             browser.close()
             
             # Subcategories are typically found as 'a' elements with 'navlabellink' class after the categories section
-            parser = HTMLParser(page_content)
-            nav_links = parser.css('a.navlabellink')[5:] # Skip first five elements
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[5:]
             subcategories_list = []
             
-            for x in nav_links:
-                subcategory_link = 'https://www.rockauto.com' + x.attrs.get('href', '')
+            for x in soup:
+                subcategory_link = 'https://www.rockauto.com' + str(x.get('href'))
                 # Extract part type code from the link if available
                 part_type_code = None
                 link_parts = subcategory_link.split(',')
@@ -758,7 +755,7 @@ async def search_parts(
                     'model': search_model,
                     'engine': search_engine,
                     'category': search_category,
-                    'subcategory': x.text(),
+                    'subcategory': x.get_text(),
                     'part_type_code': part_type_code,
                     'link': subcategory_link
                 })
@@ -775,7 +772,7 @@ async def search_parts(
             # We need to navigate through the hierarchy to get to the parts
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
             make_link = None
             
             for x in soup:
@@ -791,7 +788,7 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
             year_link = None
             
             for x in soup:
@@ -807,7 +804,7 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
             model_link = None
             
             for x in soup:
@@ -823,7 +820,7 @@ async def search_parts(
             
             # Get engine link
             page_content = browser.open(model_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[3:]
             engine_link = None
             
             for x in soup:
@@ -1066,44 +1063,41 @@ async def get_vehicle_info(search_make: str, search_year: str, search_model: str
     page_content = browser.open(search_link).read()
     browser.close()
     
-    parser = HTMLParser(page_content)
+    soup = BeautifulSoup(page_content, features='html5lib')
     
     try:
         # Get vehicle header info
-        vehicle_header = parser.css_first('div#vehicleheader')
+        vehicle_header = soup.find('div', attrs={'id': 'vehicleheader'})
         if vehicle_header:
             # Extract general vehicle details
-            vehicle_info['details']['header'] = vehicle_header.text().strip()
+            vehicle_info['details']['header'] = vehicle_header.get_text().strip()
             
-        # Try to find assembly information - this requires a different approach with selectolax
-        for span in parser.css('span'):
-            if span.text() and "Assembly" in span.text() and span.parent:
-                vehicle_info['details']['assembly'] = span.parent.text().strip()
-                break
+        # Try to find assembly information
+        assembly_info = soup.find('span', string=lambda text: text and "Assembly" in text)
+        if assembly_info and assembly_info.parent:
+            vehicle_info['details']['assembly'] = assembly_info.parent.get_text().strip()
         
         # Try to find body type information
-        for span in parser.css('span'):
-            if span.text() and "Body" in span.text() and span.parent:
-                vehicle_info['details']['body_type'] = span.parent.text().strip()
-                break
+        body_info = soup.find('span', string=lambda text: text and "Body" in text)
+        if body_info and body_info.parent:
+            vehicle_info['details']['body_type'] = body_info.parent.get_text().strip()
         
         # Get engine details
-        for span in parser.css('span'):
-            if span.text() and "Engine" in span.text() and span.parent:
-                vehicle_info['details']['engine_details'] = span.parent.text().strip()
-                break
+        engine_info = soup.find('span', string=lambda text: text and "Engine" in text)
+        if engine_info and engine_info.parent:
+            vehicle_info['details']['engine_details'] = engine_info.parent.get_text().strip()
         
         # Extract any additional specification table data
-        spec_tables = parser.css('table.spec-table')
+        spec_tables = soup.find_all('table', attrs={'class': 'spec-table'})
         if spec_tables:
             specs = {}
             for table in spec_tables:
-                rows = table.css('tr')
+                rows = table.find_all('tr')
                 for row in rows:
-                    columns = row.css('td')
+                    columns = row.find_all('td')
                     if len(columns) >= 2:
-                        key = columns[0].text().strip()
-                        value = columns[1].text().strip()
+                        key = columns[0].get_text().strip()
+                        value = columns[1].get_text().strip()
                         specs[key] = value
             
             vehicle_info['details']['specifications'] = specs
