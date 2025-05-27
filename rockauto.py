@@ -407,8 +407,8 @@ async def search_parts(
                     if year_link:
                         years_list.append({
                             'make': search_make,
-                            'year': year_link.get_text(),
-                            'link': 'https://www.rockauto.com' + str(year_link.get('href'))
+                            'year': year_link.text(),
+                            'link': 'https://www.rockauto.com' + year_link.attrs.get('href', '')
                         })
             
             result["available_options"]["years"] = years_list
@@ -422,14 +422,16 @@ async def search_parts(
         try:
             # Find the make's link first
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             make_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_make.lower():
-                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not make_link:
@@ -438,14 +440,16 @@ async def search_parts(
             
             # Get the year's link
             page_content = browser.open(make_link).read()
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[1:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
             year_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text() == search_year:
-                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text() == search_year:
+                        year_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not year_link:
@@ -456,18 +460,20 @@ async def search_parts(
             page_content = browser.open(year_link).read()
             browser.close()
             
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('div', attrs={'class', 'ranavnode'})[2:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[2:] # Skip first two elements
             models_list = []
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    model_link = x.find('a', attrs={'class', 'navlabellink'})
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    model_link = x.css_first('a.navlabellink')
                     if model_link:
                         models_list.append({
                             'make': search_make,
                             'year': search_year,
-                            'model': model_link.get_text(),
-                            'link': 'https://www.rockauto.com' + str(model_link.get('href'))
+                            'model': model_link.text(),
+                            'link': 'https://www.rockauto.com' + model_link.attrs.get('href', '')
                         })
             
             result["available_options"]["models"] = models_list
