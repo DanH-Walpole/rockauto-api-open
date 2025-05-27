@@ -289,7 +289,8 @@ async def search_parts(
     search_model: str = None, 
     search_engine: str = None,
     search_category: str = None, 
-    search_subcategory: str = None
+    search_subcategory: str = None,
+    search_part_type: str = None
 ):
     """
     Search for vehicles and parts with flexible filtering options
@@ -316,6 +317,8 @@ async def search_parts(
         result["filters"]["category"] = search_category
     if search_subcategory:
         result["filters"]["subcategory"] = search_subcategory
+    if search_part_type:
+        result["filters"]["part_type"] = search_part_type
     
     browser = mechanize.Browser()
     
@@ -708,6 +711,13 @@ async def search_parts(
             subcategories_list = []
             
             for x in soup:
+                subcategory_link = 'https://www.rockauto.com' + str(x.get('href'))
+                # Extract part type code from the link if available
+                part_type_code = None
+                link_parts = subcategory_link.split(',')
+                if len(link_parts) >= 8:  # Check if URL has enough segments to contain part type code
+                    part_type_code = link_parts[-1]
+                
                 subcategories_list.append({
                     'make': search_make,
                     'year': search_year,
@@ -715,7 +725,8 @@ async def search_parts(
                     'engine': search_engine,
                     'category': search_category,
                     'subcategory': x.get_text(),
-                    'link': 'https://www.rockauto.com' + str(x.get('href'))
+                    'part_type_code': part_type_code,
+                    'link': subcategory_link
                 })
             
             result["available_options"]["subcategories"] = subcategories_list
@@ -814,10 +825,19 @@ async def search_parts(
             for x in soup:
                 if x.get_text().lower() == search_subcategory.lower():
                     subcategory_link = 'https://www.rockauto.com' + str(x.get('href'))
+                    # Extract part type code from the link
+                    link_parts = subcategory_link.split(',')
+                    if len(link_parts) >= 8:
+                        result["filters"]["part_type_code"] = link_parts[-1]
                     break
             
             if not subcategory_link:
                 result["error"] = f"Subcategory '{search_subcategory}' not found for {search_year} {search_make} {search_model} {search_engine} {search_category}"
+                return result
+                
+            # If part_type is specified but doesn't match the extracted code, return error
+            if search_part_type and "part_type_code" in result["filters"] and search_part_type != result["filters"]["part_type_code"]:
+                result["error"] = f"Specified part type code '{search_part_type}' doesn't match the code for this subcategory"
                 return result
             
             # Now get parts for this make, year, model, engine, category, and subcategory

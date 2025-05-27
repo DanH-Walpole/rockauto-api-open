@@ -45,7 +45,7 @@ def test_search_endpoint_structure():
     params = inspect.signature(search_parts).parameters
     expected_params = [
         "search_make", "search_year", "search_model", "search_engine", 
-        "search_category", "search_subcategory"
+        "search_category", "search_subcategory", "search_part_type"
     ]
     for param in expected_params:
         assert param in params, f"Parameter {param} missing from search_parts function"
@@ -57,8 +57,11 @@ def test_search_endpoint_response_structure():
     # Create a mock function with the same return structure
     def mock_search():
         return {
-            "filters": {"make": "Toyota"},
-            "available_options": {"years": ["2015", "2016"]},
+            "filters": {"make": "Toyota", "part_type_code": "2172"},
+            "available_options": {
+                "years": ["2015", "2016"],
+                "subcategories": [{"subcategory": "Radiator", "part_type_code": "2172"}]
+            },
             "results": []
         }
     
@@ -67,3 +70,12 @@ def test_search_endpoint_response_structure():
     assert "filters" in response
     assert "available_options" in response
     assert "results" in response
+    
+    # Check that part_type_code is in the expected places
+    if "part_type_code" in response["filters"]:
+        assert isinstance(response["filters"]["part_type_code"], str)
+    
+    if "subcategories" in response["available_options"]:
+        for subcategory in response["available_options"]["subcategories"]:
+            if "part_type_code" in subcategory:
+                assert isinstance(subcategory["part_type_code"], str)
