@@ -6,7 +6,6 @@ from typing import Optional, List, Dict
 import random
 
 import mechanize
-from bs4 import BeautifulSoup  # Keep for backward compatibility during transition
 from selectolax.parser import HTMLParser
 import html5lib
 
@@ -839,12 +838,13 @@ async def search_parts(
             
             # Get category link
             page_content = browser.open(engine_link).read()
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[4:]
+            parser = HTMLParser(page_content)
+            nav_links = parser.css('a.navlabellink')[4:] # Skip first four elements
             category_link = None
             
-            for x in soup:
-                if x.get_text().lower() == search_category.lower():
-                    category_link = 'https://www.rockauto.com' + str(x.get('href'))
+            for x in nav_links:
+                if x.text().lower() == search_category.lower():
+                    category_link = 'https://www.rockauto.com' + x.attrs.get('href', '')
                     break
             
             if not category_link:
@@ -853,12 +853,13 @@ async def search_parts(
             
             # Get subcategory link
             page_content = browser.open(category_link).read()
-            soup = BeautifulSoup(page_content, features='html5lib').find_all('a', attrs={'class', 'navlabellink'})[5:]
+            parser = HTMLParser(page_content)
+            nav_links = parser.css('a.navlabellink')[5:] # Skip first five elements
             subcategory_link = None
             
-            for x in soup:
-                if x.get_text().lower() == search_subcategory.lower():
-                    subcategory_link = 'https://www.rockauto.com' + str(x.get('href'))
+            for x in nav_links:
+                if x.text().lower() == search_subcategory.lower():
+                    subcategory_link = 'https://www.rockauto.com' + x.attrs.get('href', '')
                     # Extract part type code from the link
                     link_parts = subcategory_link.split(',')
                     if len(link_parts) >= 8:
@@ -907,18 +908,18 @@ async def search_parts(
             browser.close()
             
             # Find parts table rows
-            soup = BeautifulSoup(page_content, features='html5lib')
+            parser = HTMLParser(page_content)
             
             # First, look for parts listings
             # RockAuto uses various classes for parts listings
             part_containers = []
             
             # Try to find listing containers first
-            part_containers.extend(soup.find_all('div', attrs={'class': 'listing-container'}))
+            part_containers.extend(parser.css('div.listing-container'))
             
             # If no containers, try direct part rows 
             if not part_containers:
-                part_rows = soup.find_all('tr', attrs={'class': 'listing-inner-row'})
+                part_rows = parser.css('tr.listing-inner-row')
                 # If we found rows, create a dummy container to process them
                 if part_rows:
                     part_containers = [soup]

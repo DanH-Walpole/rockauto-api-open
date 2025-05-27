@@ -97,7 +97,7 @@ This repository is a continuation and extension of the original rockauto_api wor
 ### Built With
 
 * [FastAPI](https://fastapi.tiangolo.com/) - Modern, fast web framework for building APIs
-* [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) - Web scraping library
+* [Selectolax](https://github.com/rushter/selectolax) - Fast HTML5 parser with CSS selectors
 * [Mechanize](https://mechanize.readthedocs.io/) - Automated web browser navigation
 
 
@@ -215,6 +215,7 @@ Planned improvements include:
 - More comprehensive error handling
 - Additional endpoints for specific part information
 - Performance optimizations
+  - ✅ Replaced BeautifulSoup with Selectolax for faster HTML parsing
 
 
 
