@@ -946,53 +946,82 @@ async def search_parts(
             # RockAuto uses various classes for parts listings
             part_containers = []
             
-            # Try to find listing containers first
+            # Try to find listing containers first - using multiple possible container classes
             part_containers.extend(parser.css('div.listing-container'))
+            part_containers.extend(parser.css('div.listing-section'))
             
-            # If no containers, try direct part rows 
+            # If no containers, try direct part rows with various possible classes
             if not part_containers:
-                part_rows = parser.css('tr.listing-inner-row')
+                part_rows = parser.css('tr.listing-inner-row') or parser.css('tr.ListingRow')
                 # If we found rows, create a dummy container to process them
                 if part_rows:
                     part_containers = [parser]
+                else:
+                    # If still no rows found, look specifically for radiator listings which might use different HTML structure
+                    radiator_rows = parser.css('div[id*="radiator"]') or parser.css('div.listing-text-row')
+                    if radiator_rows:
+                        part_containers = [parser]
             
             parts_list = []
             
             # Process part containers
             for container in part_containers:
-                # Get all part rows within this container
-                part_rows = container.css('tr.listing-inner-row') or []
+                # Get all part rows within this container - try various possible row selectors
+                part_rows = container.css('tr.listing-inner-row') or container.css('tr.ListingRow') or []
                 
-                # If we still don't have rows, try an alternative approach
+                # If we still don't have rows, try alternative approaches
                 if not part_rows:
-                    # Try to find parts by looking for manufacturer spans
-                    part_rows = container.css('div.listing-text-row-moreinfo-truck') or []
+                    # Try to find parts by looking for various possible row classes and structures
+                    part_rows = (container.css('div.listing-text-row-moreinfo-truck') or 
+                               container.css('div.listing-text-row') or 
+                               container.css('div[id*="listingcontainer"]'))
+                    
+                    # As a last resort, check for spans directly if it's a radiator or similar part
+                    if not part_rows and search_subcategory and 'radiator' in search_subcategory.lower():
+                        mfg_spans = container.css('span.listing-final-manufacturer')
+                        if mfg_spans:
+                            # If we found manufacturer spans, use them to guide part extraction
+                            part_rows = [span.parent for span in mfg_spans if span.parent]
                 
                 for row in part_rows:
                     try:
                         # Get manufacturer (multiple possible class names)
-                        manufacturer_elem = row.css_first('span.listing-final-manufacturer')
+                        manufacturer_elem = row.css_first('span.listing-final-manufacturer') or row.css_first('span[class*="manufacturer"]')
                         manufacturer = manufacturer_elem.text().strip() if manufacturer_elem else "N/A"
                         
                         # Get part number (multiple possible class names)
-                        part_number_elem = row.css_first('span.listing-final-partnumber')
+                        part_number_elem = row.css_first('span.listing-final-partnumber') or row.css_first('span[class*="partnumber"]')
                         part_number = part_number_elem.text().strip() if part_number_elem else "N/A"
                         
                         # Get price (try different selectors)
-                        price_elem = row.css_first('span.listing-price')
+                        price_elem = row.css_first('span.listing-price') or row.css_first('span[class*="price"]')
                         if not price_elem:
                             # Try to find price in parent or nearby elements
                             parent_row = row.parent
                             if parent_row:
-                                price_elem = parent_row.css_first('span.listing-price')
+                                price_elem = parent_row.css_first('span.listing-price') or parent_row.css_first('span[class*="price"]')
+                            
+                            # Try to find in siblings or container
+                            if not price_elem and hasattr(row, 'next_sibling') and row.next_sibling:
+                                price_elem = row.next_sibling.css_first('span.listing-price') or row.next_sibling.css_first('span[class*="price"]')
                         
                         price = price_elem.text().strip() if price_elem else "N/A"
                         
                         # Get part notes/info
-                        info = row.text().strip()
+                        info_elem = row.css_first('div.listing-text-row') or row.css_first('span.listing-text')
+                        info = info_elem.text().strip() if info_elem else row.text().strip()
                         
                         # Get more info link if available (try different selectors)
-                        link_elem = row.css_first('a.ra-btn-moreinfo') or row.css_first('a.more-info-link')
+                        link_elem = (row.css_first('a.ra-btn-moreinfo') or 
+                                   row.css_first('a.more-info-link') or 
+                                   row.css_first('a[href*="moreinfo"]'))
+                                   
+                        # If link not found in row, try parent
+                        if not link_elem and row.parent:
+                            link_elem = (row.parent.css_first('a.ra-btn-moreinfo') or 
+                                       row.parent.css_first('a.more-info-link') or 
+                                       row.parent.css_first('a[href*="moreinfo"]'))
+                                       
                         more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
                         
                         parts_list.append({
@@ -1015,9 +1044,9 @@ async def search_parts(
             
             # If we still don't have parts, try one more approach - look for all part information in the HTML
             if not parts_list:
-                # Try to extract manufacturer and part numbers directly
-                manufacturers = parser.css('span.listing-final-manufacturer')
-                part_numbers = parser.css('span.listing-final-partnumber')
+                # Try to extract manufacturer and part numbers directly with more flexible selectors
+                manufacturers = parser.css('span.listing-final-manufacturer') or parser.css('span[class*="manufacturer"]')
+                part_numbers = parser.css('span.listing-final-partnumber') or parser.css('span[class*="partnumber"]')
                 
                 # If we found manufacturers, try to build parts from them
                 for i, mfg in enumerate(manufacturers):
@@ -1029,26 +1058,44 @@ async def search_parts(
                         if i < len(part_numbers):
                             part_number = part_numbers[i].text().strip()
                         
-                        # Try to find the container this manufacturer is in
+                        # Try to find the container this manufacturer is in - multiple level traversal
                         container = mfg.parent
+                        # Try to find the best container for this part
+                        if container and not container.css_first('span.listing-price'):
+                            # If current container doesn't have price, try parent
+                            container = container.parent
+                        
                         info = container.text().strip() if container else "N/A"
                         
-                        # Try to find price in the container
+                        # Try to find price in the container with various selectors
                         price = "N/A"
                         if container:
-                            price_elem = container.css_first('span.listing-price')
+                            price_elem = container.css_first('span.listing-price') or container.css_first('span[class*="price"]')
                             if not price_elem:
                                 # Look in parent row if available
                                 parent_row = container.parent
                                 if parent_row:
-                                    price_elem = parent_row.css_first('span.listing-price')
+                                    price_elem = parent_row.css_first('span.listing-price') or parent_row.css_first('span[class*="price"]')
+                                    
+                                # Look also in adjacent elements
+                                if not price_elem and hasattr(container, 'next_sibling') and container.next_sibling:
+                                    price_elem = container.next_sibling.css_first('span.listing-price')
                             
                             price = price_elem.text().strip() if price_elem else "N/A"
                         
-                        # Try to find more info link
+                        # Try to find more info link with more flexible selectors
                         link_elem = None
                         if container:
-                            link_elem = container.css_first('a[href*=moreinfo.php]')
+                            link_elem = (container.css_first('a[href*=moreinfo.php]') or 
+                                      container.css_first('a.ra-btn-moreinfo') or 
+                                      container.css_first('a.more-info-link') or
+                                      container.css_first('a[class*="info"]'))
+                            
+                            # Try parent if no link in current container
+                            if not link_elem and container.parent:
+                                link_elem = (container.parent.css_first('a[href*=moreinfo.php]') or 
+                                          container.parent.css_first('a.ra-btn-moreinfo') or 
+                                          container.parent.css_first('a.more-info-link'))
                         
                         more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
                         
@@ -1069,6 +1116,43 @@ async def search_parts(
                     except Exception as e:
                         # Skip any parts with parsing issues
                         continue
+                        
+                # Final desperate attempt - look for any product listing sections or tables
+                if not parts_list and search_subcategory and 'radiator' in search_subcategory.lower():
+                    # Try to find any tables or sections that could contain parts
+                    product_sections = parser.css('table[summary*="parts"]') or parser.css('div[id*="productlist"]')
+                    
+                    for section in product_sections:
+                        try:
+                            # Extract text for simple listing
+                            info = section.text().strip()
+                            
+                            # Try to find manufacturer and part number if possible
+                            mfg_elem = section.css_first('span[class*="manufacturer"]')
+                            manufacturer = mfg_elem.text().strip() if mfg_elem else "N/A"
+                            
+                            pn_elem = section.css_first('span[class*="partnumber"]')
+                            part_number = pn_elem.text().strip() if pn_elem else "N/A"
+                            
+                            price_elem = section.css_first('span[class*="price"]')
+                            price = price_elem.text().strip() if price_elem else "N/A"
+                            
+                            parts_list.append({
+                                'make': search_make,
+                                'year': search_year,
+                                'model': search_model,
+                                'engine': search_engine,
+                                'category': search_category,
+                                'subcategory': search_subcategory,
+                                'part_type_code': search_part_type,
+                                'manufacturer': manufacturer,
+                                'part_number': part_number,
+                                'price': price,
+                                'info': info,
+                                'more_info_link': None
+                            })
+                        except Exception as e:
+                            continue
             
             result["results"] = parts_list
             return result
