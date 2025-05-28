@@ -994,18 +994,64 @@ async def search_parts(
                         part_number = part_number_elem.text().strip() if part_number_elem else "N/A"
                         
                         # Get price (try different selectors)
-                        price_elem = row.css_first('span.listing-price') or row.css_first('span[class*="price"]')
+                        # First try common price classes directly in this row
+                        price_elem = (row.css_first('span.listing-price') or 
+                                    row.css_first('span[class*="price"]') or
+                                    row.css_first('span.ra-price') or
+                                    row.css_first('div.ra-price') or
+                                    row.css_first('td.price') or
+                                    row.css_first('div[class*="price"]'))
+                        
+                        # If not found, search broader
                         if not price_elem:
-                            # Try to find price in parent or nearby elements
+                            # Try to find price in parent 
                             parent_row = row.parent
                             if parent_row:
-                                price_elem = parent_row.css_first('span.listing-price') or parent_row.css_first('span[class*="price"]')
+                                price_elem = (parent_row.css_first('span.listing-price') or 
+                                            parent_row.css_first('span[class*="price"]') or
+                                            parent_row.css_first('span.ra-price') or
+                                            parent_row.css_first('div.ra-price') or
+                                            parent_row.css_first('td.price') or
+                                            parent_row.css_first('div[class*="price"]'))
                             
-                            # Try to find in siblings or container
+                            # Try to find in siblings
                             if not price_elem and hasattr(row, 'next_sibling') and row.next_sibling:
-                                price_elem = row.next_sibling.css_first('span.listing-price') or row.next_sibling.css_first('span[class*="price"]')
+                                price_elem = (row.next_sibling.css_first('span.listing-price') or 
+                                           row.next_sibling.css_first('span[class*="price"]') or
+                                           row.next_sibling.css_first('span.ra-price') or
+                                           row.next_sibling.css_first('div[class*="price"]'))
+                                
+                            # Try previous sibling too
+                            if not price_elem and hasattr(row, 'prev_sibling') and row.prev_sibling:
+                                price_elem = (row.prev_sibling.css_first('span.listing-price') or 
+                                           row.prev_sibling.css_first('span[class*="price"]') or
+                                           row.prev_sibling.css_first('span.ra-price') or
+                                           row.prev_sibling.css_first('div[class*="price"]'))
+                                           
+                            # For radiators specifically, try searching in nearby containers
+                            if not price_elem and search_subcategory and 'radiator' in search_subcategory.lower():
+                                # Look for price in any nearby element within this parent level
+                                if parent_row:
+                                    # Try all span elements with pricing-related classes
+                                    price_spans = parent_row.css('span')
+                                    for span in price_spans:
+                                        if span.text() and '$' in span.text():
+                                            price_elem = span
+                                            break
                         
+                        # Extract price from element if found
                         price = price_elem.text().strip() if price_elem else "N/A"
+                        
+                        # If price still not found but we know it's a radiator, try one more method
+                        if price == "N/A" and search_subcategory and 'radiator' in search_subcategory.lower():
+                            # Look for any element containing dollar sign in row text
+                            row_text = row.text()
+                            if '$' in row_text:
+                                # Try to extract price with simple pattern matching
+                                import re
+                                price_matches = re.findall(r'\$\d+\.\d+', row_text)
+                                if price_matches:
+                                    price = price_matches[0]
                         
                         # Get part notes/info
                         info_elem = row.css_first('div.listing-text-row') or row.css_first('span.listing-text')
@@ -1021,8 +1067,16 @@ async def search_parts(
                             link_elem = (row.parent.css_first('a.ra-btn-moreinfo') or 
                                        row.parent.css_first('a.more-info-link') or 
                                        row.parent.css_first('a[href*="moreinfo"]'))
-                                       
-                        more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
+                        
+                        # Fix URL duplication issues and ensure proper formatting
+                        more_info_link = None
+                        if link_elem and link_elem.attrs.get('href'):
+                            href = link_elem.attrs.get('href', '')
+                            # Avoid duplicate domain in URLs
+                            if href.startswith('https://www.rockauto.com'):
+                                more_info_link = href
+                            else:
+                                more_info_link = "https://www.rockauto.com" + href
                         
                         parts_list.append({
                             'make': search_make,
@@ -1070,18 +1124,37 @@ async def search_parts(
                         # Try to find price in the container with various selectors
                         price = "N/A"
                         if container:
-                            price_elem = container.css_first('span.listing-price') or container.css_first('span[class*="price"]')
+                            price_elem = (container.css_first('span.listing-price') or 
+                                      container.css_first('span[class*="price"]') or 
+                                      container.css_first('span.ra-price') or
+                                      container.css_first('div.ra-price') or
+                                      container.css_first('td.price') or
+                                      container.css_first('div[class*="price"]'))
+                            
                             if not price_elem:
                                 # Look in parent row if available
                                 parent_row = container.parent
                                 if parent_row:
-                                    price_elem = parent_row.css_first('span.listing-price') or parent_row.css_first('span[class*="price"]')
+                                    price_elem = (parent_row.css_first('span.listing-price') or 
+                                               parent_row.css_first('span[class*="price"]') or
+                                               parent_row.css_first('span.ra-price') or
+                                               parent_row.css_first('div[class*="price"]'))
                                     
                                 # Look also in adjacent elements
                                 if not price_elem and hasattr(container, 'next_sibling') and container.next_sibling:
-                                    price_elem = container.next_sibling.css_first('span.listing-price')
+                                    price_elem = (container.next_sibling.css_first('span.listing-price') or 
+                                               container.next_sibling.css_first('span[class*="price"]') or
+                                               container.next_sibling.css_first('span.ra-price'))
+                                
+                                # If still nothing, check for $ in the text content
+                                if not price_elem and container.text() and '$' in container.text():
+                                    import re
+                                    price_matches = re.findall(r'\$\d+\.\d+', container.text())
+                                    if price_matches:
+                                        price = price_matches[0]
                             
-                            price = price_elem.text().strip() if price_elem else "N/A"
+                            if price == "N/A" and price_elem:
+                                price = price_elem.text().strip()
                         
                         # Try to find more info link with more flexible selectors
                         link_elem = None
@@ -1097,7 +1170,15 @@ async def search_parts(
                                           container.parent.css_first('a.ra-btn-moreinfo') or 
                                           container.parent.css_first('a.more-info-link'))
                         
-                        more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
+                        # Fix URL duplication issues and ensure proper formatting
+                        more_info_link = None
+                        if link_elem and link_elem.attrs.get('href'):
+                            href = link_elem.attrs.get('href', '')
+                            # Avoid duplicate domain in URLs
+                            if href.startswith('https://www.rockauto.com'):
+                                more_info_link = href
+                            else:
+                                more_info_link = "https://www.rockauto.com" + href
                         
                         parts_list.append({
                             'make': search_make,
@@ -1134,8 +1215,26 @@ async def search_parts(
                             pn_elem = section.css_first('span[class*="partnumber"]')
                             part_number = pn_elem.text().strip() if pn_elem else "N/A"
                             
-                            price_elem = section.css_first('span[class*="price"]')
-                            price = price_elem.text().strip() if price_elem else "N/A"
+                            # Enhanced price extraction for more robust detection
+                            price = "N/A"
+                            
+                            # Try multiple price selectors
+                            price_elem = (section.css_first('span[class*="price"]') or 
+                                       section.css_first('div[class*="price"]') or 
+                                       section.css_first('span.ra-price') or 
+                                       section.css_first('td.price'))
+                            
+                            if price_elem:
+                                price = price_elem.text().strip()
+                            else:
+                                # If no price element found, look for dollar sign in section text
+                                section_text = section.text()
+                                if '$' in section_text:
+                                    # Try to extract price with pattern matching
+                                    import re
+                                    price_matches = re.findall(r'\$\d+\.\d+', section_text)
+                                    if price_matches:
+                                        price = price_matches[0]
                             
                             parts_list.append({
                                 'make': search_make,
