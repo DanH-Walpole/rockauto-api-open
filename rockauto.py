@@ -487,14 +487,16 @@ async def search_parts(
             # We need to navigate through the hierarchy to get the model link
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             make_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_make.lower():
-                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not make_link:
@@ -503,14 +505,16 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
             year_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text() == search_year:
-                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text() == search_year:
+                        year_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not year_link:
@@ -519,14 +523,16 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[2:] # Skip first two elements
             model_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_model.lower():
-                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not model_link:
@@ -537,25 +543,27 @@ async def search_parts(
             page_content = browser.open(model_link).read()
             browser.close()
             
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[3:] # Skip first three elements
             engines_list = []
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    engine_link = x.find('a', attrs={'class', 'navlabellink'})
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    engine_link = x.css_first('a.navlabellink')
                     if engine_link:
                         engines_list.append({
                             'make': search_make,
                             'year': search_year,
                             'model': search_model,
-                            'engine': engine_link.get_text(),
-                            'link': 'https://www.rockauto.com' + str(engine_link.get('href'))
+                            'engine': engine_link.text(),
+                            'link': 'https://www.rockauto.com' + engine_link.attrs.get('href', '')
                         })
             
             result["available_options"]["engines"] = engines_list
             return result
         except Exception as e:
-            result["error"] = "Error retrieving engines for the specified vehicle"
+            result["error"] = f"Error retrieving engines for the specified vehicle: {str(e)}"
             return result
             
     # If we have make, year, model, engine but no category, return available categories
@@ -564,14 +572,16 @@ async def search_parts(
             # We need to navigate through the hierarchy to get to the categories
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             make_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_make.lower():
-                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not make_link:
@@ -580,14 +590,16 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
             year_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text() == search_year:
-                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text() == search_year:
+                        year_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not year_link:
@@ -596,14 +608,16 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[2:] # Skip first two elements
             model_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_model.lower():
-                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not model_link:
@@ -612,14 +626,16 @@ async def search_parts(
             
             # Get engine link
             page_content = browser.open(model_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[3:] # Skip first three elements
             engine_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_engine.lower():
-                        engine_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_engine.lower():
+                        engine_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not engine_link:
@@ -657,14 +673,16 @@ async def search_parts(
             # We need to navigate through the hierarchy to get to the subcategories
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             make_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_make.lower():
-                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not make_link:
@@ -673,14 +691,16 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
             year_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text() == search_year:
-                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text() == search_year:
+                        year_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not year_link:
@@ -689,14 +709,16 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[2:] # Skip first two elements
             model_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_model.lower():
-                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not model_link:
@@ -705,14 +727,16 @@ async def search_parts(
             
             # Get engine link
             page_content = browser.open(model_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[3:] # Skip first three elements
             engine_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_engine.lower():
-                        engine_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_engine.lower():
+                        engine_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not engine_link:
@@ -774,14 +798,16 @@ async def search_parts(
             # We need to navigate through the hierarchy to get to the parts
             # First get make link
             page_content = browser.open('https://www.rockauto.com/en/catalog/').read()
-            parser = HTMLParser(page_content).css('div.ranavnode')
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')
             make_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_make.lower():
-                        make_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_make.lower():
+                        make_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not make_link:
@@ -790,14 +816,16 @@ async def search_parts(
             
             # Get year link
             page_content = browser.open(make_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[1:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[1:] # Skip first element
             year_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text() == search_year:
-                        year_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text() == search_year:
+                        year_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not year_link:
@@ -806,14 +834,16 @@ async def search_parts(
                 
             # Get model link
             page_content = browser.open(year_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[2:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[2:] # Skip first two elements
             model_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_model.lower():
-                        model_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_model.lower():
+                        model_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not model_link:
@@ -822,14 +852,16 @@ async def search_parts(
             
             # Get engine link
             page_content = browser.open(model_link).read()
-            parser = HTMLParser(page_content).css('div.ranavnode')[3:]
+            parser = HTMLParser(page_content)
+            nav_nodes = parser.css('div.ranavnode')[3:] # Skip first three elements
             engine_link = None
             
-            for x in soup:
-                if 'US' in next(x.children)['value']:
-                    link_elem = x.find('a', attrs={'class', 'navlabellink'})
-                    if link_elem and link_elem.get_text().lower() == search_engine.lower():
-                        engine_link = 'https://www.rockauto.com' + str(link_elem.get('href'))
+            for x in nav_nodes:
+                input_elem = x.css_first('input')
+                if input_elem and 'US' in input_elem.attrs.get('value', ''):
+                    link_elem = x.css_first('a.navlabellink')
+                    if link_elem and link_elem.text().lower() == search_engine.lower():
+                        engine_link = 'https://www.rockauto.com' + link_elem.attrs.get('href', '')
                         break
             
             if not engine_link:
@@ -922,46 +954,46 @@ async def search_parts(
                 part_rows = parser.css('tr.listing-inner-row')
                 # If we found rows, create a dummy container to process them
                 if part_rows:
-                    part_containers = [soup]
+                    part_containers = [parser]
             
             parts_list = []
             
             # Process part containers
             for container in part_containers:
                 # Get all part rows within this container
-                part_rows = container.find_all('tr', attrs={'class': 'listing-inner-row'}) or []
+                part_rows = container.css('tr.listing-inner-row') or []
                 
                 # If we still don't have rows, try an alternative approach
                 if not part_rows:
                     # Try to find parts by looking for manufacturer spans
-                    part_rows = container.find_all('div', attrs={'class': 'listing-text-row-moreinfo-truck'}) or []
+                    part_rows = container.css('div.listing-text-row-moreinfo-truck') or []
                 
                 for row in part_rows:
                     try:
                         # Get manufacturer (multiple possible class names)
-                        manufacturer_elem = row.find('span', attrs={'class': lambda c: c and 'listing-final-manufacturer' in c})
-                        manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
+                        manufacturer_elem = row.css_first('span.listing-final-manufacturer')
+                        manufacturer = manufacturer_elem.text().strip() if manufacturer_elem else "N/A"
                         
                         # Get part number (multiple possible class names)
-                        part_number_elem = row.find('span', attrs={'class': lambda c: c and 'listing-final-partnumber' in c})
-                        part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
+                        part_number_elem = row.css_first('span.listing-final-partnumber')
+                        part_number = part_number_elem.text().strip() if part_number_elem else "N/A"
                         
                         # Get price (try different selectors)
-                        price_elem = row.find('span', attrs={'class': 'listing-price'})
+                        price_elem = row.css_first('span.listing-price')
                         if not price_elem:
                             # Try to find price in parent or nearby elements
-                            price_row = row.find_parent('tr')
-                            if price_row:
-                                price_elem = price_row.find('span', attrs={'class': 'listing-price'})
+                            parent_row = row.parent
+                            if parent_row:
+                                price_elem = parent_row.css_first('span.listing-price')
                         
-                        price = price_elem.get_text().strip() if price_elem else "N/A"
+                        price = price_elem.text().strip() if price_elem else "N/A"
                         
                         # Get part notes/info
-                        info = row.get_text().strip()
+                        info = row.text().strip()
                         
                         # Get more info link if available (try different selectors)
-                        link_elem = row.find('a', attrs={'class': 'ra-btn-moreinfo'}) or row.find('a', attrs={'class': 'more-info-link'})
-                        more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
+                        link_elem = row.css_first('a.ra-btn-moreinfo') or row.css_first('a.more-info-link')
+                        more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
                         
                         parts_list.append({
                             'make': search_make,
@@ -984,41 +1016,41 @@ async def search_parts(
             # If we still don't have parts, try one more approach - look for all part information in the HTML
             if not parts_list:
                 # Try to extract manufacturer and part numbers directly
-                manufacturers = soup.find_all('span', attrs={'class': lambda c: c and 'listing-final-manufacturer' in c})
-                part_numbers = soup.find_all('span', attrs={'class': lambda c: c and 'listing-final-partnumber' in c})
+                manufacturers = parser.css('span.listing-final-manufacturer')
+                part_numbers = parser.css('span.listing-final-partnumber')
                 
                 # If we found manufacturers, try to build parts from them
                 for i, mfg in enumerate(manufacturers):
                     try:
-                        manufacturer = mfg.get_text().strip()
+                        manufacturer = mfg.text().strip()
                         
                         # Try to get the corresponding part number
                         part_number = "N/A"
                         if i < len(part_numbers):
-                            part_number = part_numbers[i].get_text().strip()
+                            part_number = part_numbers[i].text().strip()
                         
                         # Try to find the container this manufacturer is in
-                        container = mfg.find_parent('div') or mfg.find_parent('tr')
-                        info = container.get_text().strip() if container else "N/A"
+                        container = mfg.parent
+                        info = container.text().strip() if container else "N/A"
                         
                         # Try to find price in the container
                         price = "N/A"
                         if container:
-                            price_elem = container.find('span', attrs={'class': 'listing-price'})
+                            price_elem = container.css_first('span.listing-price')
                             if not price_elem:
                                 # Look in parent row if available
-                                parent_row = container.find_parent('tr')
+                                parent_row = container.parent
                                 if parent_row:
-                                    price_elem = parent_row.find('span', attrs={'class': 'listing-price'})
+                                    price_elem = parent_row.css_first('span.listing-price')
                             
-                            price = price_elem.get_text().strip() if price_elem else "N/A"
+                            price = price_elem.text().strip() if price_elem else "N/A"
                         
                         # Try to find more info link
                         link_elem = None
                         if container:
-                            link_elem = container.find('a', href=lambda h: h and 'moreinfo.php' in h)
+                            link_elem = container.css_first('a[href*=moreinfo.php]')
                         
-                        more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
+                        more_info_link = "https://www.rockauto.com" + link_elem.attrs.get('href', '') if link_elem else None
                         
                         parts_list.append({
                             'make': search_make,
