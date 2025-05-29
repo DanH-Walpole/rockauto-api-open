@@ -1,7 +1,7 @@
-requests==2.22.0
+requests>=2.25.0
 mechanize==0.4.5
 html5lib==1.1
-beautifulsoup4==4.9.3
+selectolax>=0.3.0
 fastapi>=0.68.0
 uvicorn>=0.15.0
 pytest>=7.0.0
