@@ -1016,7 +1016,7 @@ async def search_parts(
 
 @rockauto_api.get("/part_number/{partnum}", description="Search for parts by part number")
 async def search_part_by_number(partnum: str):
-    """Return list of RockAuto part numbers that cross-reference the given number"""
+    """Return list of RockAuto part numbers that cross-reference the given number."""
     url = f"https://www.rockauto.com/en/partsearch/?partnum={partnum}"
     try:
         resp = requests.get(url)
@@ -1024,9 +1024,20 @@ async def search_part_by_number(partnum: str):
         results = []
         for span in soup.find_all('span', attrs={'class': 'listing-final-partnumber'}):
             part_number = span.get_text().strip()
-            manuf_elem = span.find_previous('span', attrs={'class': 'listing-final-manufacturer'})
+            row = span.find_parent('tr')
+            manuf_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'}) if row else None
             manufacturer = manuf_elem.get_text().strip() if manuf_elem else 'N/A'
-            results.append({'manufacturer': manufacturer, 'part_number': part_number})
+            price_elem = None
+            if row:
+                price_elem = row.find('span', attrs={'class': 'listing-total'})
+                if not price_elem:
+                    price_elem = row.find('span', attrs={'class': 'listing-price'})
+            price = price_elem.get_text(strip=True) if price_elem else 'N/A'
+            results.append({
+                'manufacturer': manufacturer,
+                'part_number': part_number,
+                'price': price
+            })
         return results
     except Exception:
         return []
