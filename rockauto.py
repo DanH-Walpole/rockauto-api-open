@@ -1013,6 +1013,35 @@ async def search_parts(
     result["message"] = "Search functionality works best with partial information to explore options"
     return result
 
+
+@rockauto_api.get("/part_number/{partnum}", description="Search for parts by part number")
+async def search_part_by_number(partnum: str):
+    """Return list of RockAuto part numbers that cross-reference the given number."""
+    url = f"https://www.rockauto.com/en/partsearch/?partnum={partnum}"
+    try:
+        resp = requests.get(url)
+        soup = BeautifulSoup(resp.text, features='html5lib')
+        results = []
+        for span in soup.find_all('span', attrs={'class': 'listing-final-partnumber'}):
+            part_number = span.get_text().strip()
+            row = span.find_parent('tr')
+            manuf_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'}) if row else None
+            manufacturer = manuf_elem.get_text().strip() if manuf_elem else 'N/A'
+            price_elem = None
+            if row:
+                price_elem = row.find('span', attrs={'class': 'listing-total'})
+                if not price_elem:
+                    price_elem = row.find('span', attrs={'class': 'listing-price'})
+            price = price_elem.get_text(strip=True) if price_elem else 'N/A'
+            results.append({
+                'manufacturer': manufacturer,
+                'part_number': part_number,
+                'price': price
+            })
+        return results
+    except Exception:
+        return []
+
 @rockauto_api.get("/vehicle_info/{search_vehicle}", description="Get detailed information about a specific vehicle")
 async def get_vehicle_info(search_make: str, search_year: str, search_model: str, search_engine: str, search_link: str):
     """
