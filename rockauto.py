@@ -12,13 +12,33 @@ import html5lib
 import requests
 import json
 
+tags_metadata = [
+    {
+        "name": "General",
+        "description": "Welcome message and project overview"
+    },
+    {
+        "name": "Catalog",
+        "description": "Navigate makes, years, models and categories"
+    },
+    {
+        "name": "Parts",
+        "description": "Retrieve parts, closeouts and search the catalog"
+    },
+    {
+        "name": "Vehicles",
+        "description": "Vehicle specific information"
+    }
+]
+
 rockauto_api = FastAPI(
     title="RockAuto API",
     description="An unofficial API for RockAuto catalog data",
-    version="0.1.0"
+    version="0.1.0",
+    openapi_tags=tags_metadata,
 )
 
-@rockauto_api.get("/")
+@rockauto_api.get("/", tags=["General"])
 async def root():
     return {
         "message": "Welcome to the RockAuto API",
@@ -37,7 +57,7 @@ async def root():
         }
     }
 
-@rockauto_api.get("/makes")
+@rockauto_api.get("/makes", tags=["Catalog"])
 async def get_makes():
     makes_list = []
 
@@ -60,7 +80,7 @@ async def get_makes():
 
     return makes_list
 
-@rockauto_api.get("/years/{search_vehicle}")
+@rockauto_api.get("/years/{search_vehicle}", tags=["Catalog"])
 async def get_years( search_make: str, search_link: str ):
     years_list = []
 
@@ -82,7 +102,7 @@ async def get_years( search_make: str, search_link: str ):
 
     return years_list
 
-@rockauto_api.get("/years/{search_vehicle}")
+@rockauto_api.get("/years/{search_vehicle}", tags=["Catalog"])
 async def get_models( search_make: str, search_year: str, search_link: str ):
     models_list = []
 
@@ -104,7 +124,7 @@ async def get_models( search_make: str, search_year: str, search_link: str ):
 
     return models_list
 
-@rockauto_api.get("/engines/{search_vehicle}")
+@rockauto_api.get("/engines/{search_vehicle}", tags=["Catalog"])
 async def get_engines( search_make: str, search_year: str, search_model: str, search_link: str ):
     engines_list = []
 
@@ -126,7 +146,7 @@ async def get_engines( search_make: str, search_year: str, search_model: str, se
     
     return engines_list
 
-@rockauto_api.get("/categories/{search_vehicle}")
+@rockauto_api.get("/categories/{search_vehicle}", tags=["Catalog"])
 async def get_categories( search_make: str, search_year: str, search_model: str, search_engine: str, search_link: str ):
     categories_list = []
 
@@ -141,7 +161,7 @@ async def get_categories( search_make: str, search_year: str, search_model: str,
 
     return categories_list
 
-@rockauto_api.get("/sub_categories/{search_vehicle}")
+@rockauto_api.get("/sub_categories/{search_vehicle}", tags=["Catalog"])
 async def get_sub_categories( search_make: str, search_year: str, search_model: str, search_engine: str, search_category: str, search_link: str ):
     sub_categories_list = []
 
@@ -156,7 +176,7 @@ async def get_sub_categories( search_make: str, search_year: str, search_model: 
 
     return sub_categories_list
 
-@rockauto_api.get("/parts/{search_vehicle}", description="Get parts for a specific vehicle and subcategory")
+@rockauto_api.get("/parts/{search_vehicle}", description="Get parts for a specific vehicle and subcategory", tags=["Parts"])
 async def get_parts( search_make: str, search_year: str, search_model: str, search_engine: str, search_category: str, search_subcategory: str, search_link: str ):
     """
     Get parts for a specific vehicle and subcategory
@@ -215,7 +235,11 @@ async def get_parts( search_make: str, search_year: str, search_model: str, sear
     
     return parts_list
 
-@rockauto_api.get("/closeouts/{carcode}", description="Get closeout deals for a specific vehicle")
+@rockauto_api.get(
+    "/closeouts/{carcode}",
+    description="Get closeout deals for a specific vehicle",
+    tags=["Parts"],
+)
 async def get_closeout_deals(carcode: str):
     """
     Get closeout deals for a specific vehicle
@@ -282,7 +306,11 @@ async def get_closeout_deals(carcode: str):
     
     return closeout_deals
 
-@rockauto_api.get("/search", description="Search for vehicles and parts with flexible filtering options")
+@rockauto_api.get(
+    "/search",
+    description="Search for vehicles and parts with flexible filtering options",
+    tags=["Parts"],
+)
 async def search_parts(
     search_make: str = None, 
     search_year: str = None, 
@@ -1014,7 +1042,11 @@ async def search_parts(
     return result
 
 
-@rockauto_api.get("/part_number/{partnum}", description="Search for parts by part number")
+@rockauto_api.get(
+    "/part_number/{partnum}",
+    description="Search for parts by part number",
+    tags=["Parts"],
+)
 async def search_part_by_number(partnum: str):
     """Return list of RockAuto part numbers that cross-reference the given number
     along with any extra details available from the part's information page."""
@@ -1068,7 +1100,11 @@ async def search_part_by_number(partnum: str):
     except Exception:
         return []
 
-@rockauto_api.get("/vehicle_info/{search_vehicle}", description="Get detailed information about a specific vehicle")
+@rockauto_api.get(
+    "/vehicle_info/{search_vehicle}",
+    description="Get detailed information about a specific vehicle",
+    tags=["Vehicles"],
+)
 async def get_vehicle_info(search_make: str, search_year: str, search_model: str, search_engine: str, search_link: str):
     """
     Get detailed enthusiast-level information about a specific vehicle
