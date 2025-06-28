@@ -126,6 +126,16 @@ To get a local copy up and running follow these simple steps.
    ```sh
    uvicorn rockauto:rockauto_api --reload
    ```
+   Or simply execute:
+   ```sh
+   python start.py
+   ```
+
+4. (Optional) Run the tests
+   ```sh
+   pytest
+   ```
+   See `tests/README.md` for details on the lightweight test suite.
 
 
 <!-- USAGE EXAMPLES -->
@@ -138,6 +148,12 @@ The API provides several endpoints to navigate RockAuto's parts catalog:
 * `/models/{search_vehicle}` - Get models for a specific make and year
 * `/engines/{search_vehicle}` - Get engines for a specific make, year, and model
 * `/categories/{search_vehicle}` - Get part categories for a specific vehicle
+* `/sub_categories/{search_vehicle}` - Get sub-categories within a part category
+* `/parts/{search_vehicle}` - Get parts for a specific vehicle and subcategory
+* `/closeouts/{carcode}` - Retrieve closeout deals for a vehicle
+* `/search` - Explore vehicles and parts with flexible filters
+* `/part_number/{partnum}` - Find parts by part number
+* `/vehicle_info/{search_vehicle}` - Detailed vehicle information
 
 Many endpoints accept a `search_link` query parameter. If omitted, the API will attempt to construct this value automatically from the other parameters. You may also provide the `link` returned by the previous endpoint.
 
@@ -203,6 +219,12 @@ Examples:
 GET /vehicle_info/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
 ```
 Returns detailed vehicle information including assembly details and specifications.
+
+#### Search by Part Number
+```
+GET /part_number/2172
+```
+Returns parts that cross-reference the provided part number along with any extra details.
 
 
 
