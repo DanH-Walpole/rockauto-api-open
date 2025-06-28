@@ -165,25 +165,25 @@ Returns available models for the specified make and year.
 
 #### Get Engines for a Model
 ```
-GET /engines/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_link={link}
+GET /engines/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry
 ```
 Returns available engines for the specified model.
 
 #### Get Part Categories
 ```
-GET /categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
+GET /categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L
 ```
 Returns part categories for the specified vehicle.
 
 #### Get Sub-Categories
 ```
-GET /sub_categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_link={link}
+GET /sub_categories/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake
 ```
 Returns sub-categories within a part category.
 
 #### Get Parts List
 ```
-GET /parts/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_subcategory=Pads&search_link={link}
+GET /parts/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_category=Brake&search_subcategory=Pads
 ```
 Returns a list of parts with details including price, manufacturer, and notes.
 
@@ -216,7 +216,7 @@ Examples:
 
 #### Get Vehicle Information
 ```
-GET /vehicle_info/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L&search_link={link}
+GET /vehicle_info/{search_vehicle}?search_make=Toyota&search_year=2015&search_model=Camry&search_engine=2.5L
 ```
 Returns detailed vehicle information including assembly details and specifications.
 
