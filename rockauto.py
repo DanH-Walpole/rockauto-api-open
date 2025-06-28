@@ -13,22 +13,10 @@ import requests
 import json
 
 tags_metadata = [
-    {
-        "name": "General",
-        "description": "Welcome message and project overview"
-    },
-    {
-        "name": "Catalog",
-        "description": "Navigate makes, years, models and categories"
-    },
-    {
-        "name": "Parts",
-        "description": "Retrieve parts, closeouts and search the catalog"
-    },
-    {
-        "name": "Vehicles",
-        "description": "Vehicle specific information"
-    }
+    {"name": "General", "description": "Welcome message and project overview"},
+    {"name": "Catalog", "description": "Navigate makes, years, models and categories"},
+    {"name": "Parts", "description": "Retrieve parts, closeouts and search the catalog"},
+    {"name": "Vehicles", "description": "Vehicle specific information"},
 ]
 
 rockauto_api = FastAPI(
@@ -53,10 +41,132 @@ async def root():
             "parts/{search_vehicle}": "Get parts for a specific vehicle and subcategory",
             "search": "Search for vehicles and parts with flexible filtering options",
             "closeouts/{carcode}": "Get closeout deals for a specific vehicle",
-            "vehicle_info/{search_vehicle}": "Get detailed information about a specific vehicle"
+            "vehicle_info/{search_vehicle}": "Get detailed information about a specific vehicle",
         },
-        "note": "Use the `link` value from one endpoint as the `search_link` parameter for the next"
+        "note": "Provide the `link` value from the previous endpoint as `search_link` or omit it to let the API generate one automatically",
     }
+
+
+
+def craft_search_link(
+    search_make: str = None,
+    search_year: str = None,
+    search_model: str = None,
+    search_engine: str = None,
+    search_category: str = None,
+    search_subcategory: str = None,
+    search_part_type: str = None,
+):
+    """Generate a RockAuto catalog link for the provided parameters."""
+
+    browser = mechanize.Browser()
+    link = "https://www.rockauto.com/en/catalog/"
+    try:
+        if not search_make:
+            return link
+
+        page = browser.open(link).read()
+        soup = BeautifulSoup(page, features="html5lib").find_all("div", attrs={"class", "ranavnode"})
+        for x in soup:
+            if "US" in next(x.children)["value"]:
+                a = x.find("a", attrs={"class", "navlabellink"})
+                if a and a.get_text().lower() == search_make.lower():
+                    link = "https://www.rockauto.com" + str(a.get("href"))
+                    break
+        else:
+            return None
+
+        if not search_year:
+            return link
+
+        page = browser.open(link).read()
+        soup = BeautifulSoup(page, features="html5lib").find_all("div", attrs={"class", "ranavnode"})[1:]
+        for x in soup:
+            if "US" in next(x.children)["value"]:
+                a = x.find("a", attrs={"class", "navlabellink"})
+                if a and a.get_text() == search_year:
+                    link = "https://www.rockauto.com" + str(a.get("href"))
+                    break
+        else:
+            return None
+
+        if not search_model:
+            return link
+
+        page = browser.open(link).read()
+        soup = BeautifulSoup(page, features="html5lib").find_all("div", attrs={"class", "ranavnode"})[2:]
+        for x in soup:
+            if "US" in next(x.children)["value"]:
+                a = x.find("a", attrs={"class", "navlabellink"})
+                if a and a.get_text().lower() == search_model.lower():
+                    link = "https://www.rockauto.com" + str(a.get("href"))
+                    break
+        else:
+            return None
+
+        if not search_engine:
+            return link
+
+        page = browser.open(link).read()
+        soup = BeautifulSoup(page, features="html5lib").find_all("div", attrs={"class", "ranavnode"})[3:]
+        for x in soup:
+            if "US" in next(x.children)["value"]:
+                a = x.find("a", attrs={"class", "navlabellink"})
+                if a and a.get_text().lower() == search_engine.lower():
+                    link = "https://www.rockauto.com" + str(a.get("href"))
+                    break
+        else:
+            return None
+
+        if not search_category:
+            return link
+
+        page = browser.open(link).read()
+        soup = BeautifulSoup(page, features="html5lib").find_all("a", attrs={"class", "navlabellink"})[4:]
+        for a in soup:
+            if a.get_text().lower() == search_category.lower():
+                link = "https://www.rockauto.com" + str(a.get("href"))
+                break
+        else:
+            return None
+
+        if not search_subcategory:
+            return link
+
+        page = browser.open(link).read()
+        soup = BeautifulSoup(page, features="html5lib").find_all("a", attrs={"class", "navlabellink"})[5:]
+        for a in soup:
+            if a.get_text().lower() == search_subcategory.lower():
+                link = "https://www.rockauto.com" + str(a.get("href"))
+                break
+        else:
+            return None
+
+        if search_part_type:
+            base_url = "https://www.rockauto.com/en/catalog/"
+            url_parts = [
+                search_make.lower().replace(" ", "+"),
+                search_year,
+                search_model.lower().replace(" ", "+"),
+                search_engine.lower().replace(" ", "+"),
+                "",
+                search_category.lower().replace(" ", "+"),
+                search_subcategory.lower().replace(" ", "+"),
+                search_part_type,
+            ]
+            link_parts = link.split("/")
+            if len(link_parts) >= 6:
+                for part in link_parts:
+                    if part.isdigit() and len(part) > 5:
+                        url_parts[4] = part
+                        break
+            link = base_url + ",".join(url_parts)
+
+        return link
+    except Exception:
+        return None
+    finally:
+        browser.close()
 
 @rockauto_api.get("/makes", tags=["Catalog"])
 async def get_makes():
@@ -84,13 +194,12 @@ async def get_makes():
 @rockauto_api.get("/years/{search_vehicle}", tags=["Catalog"])
 async def get_years(
     search_make: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/makes` endpoint"
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/makes` endpoint"),
 ):
     years_list = []
 
+    if not search_link:
+        search_link = craft_search_link(search_make=search_make)
     browser = mechanize.Browser()
     page_content = browser.open( search_link ).read()
     browser.close()
@@ -109,17 +218,17 @@ async def get_years(
 
     return years_list
 
+
 @rockauto_api.get("/years/{search_vehicle}", tags=["Catalog"])
 async def get_models(
     search_make: str,
     search_year: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/years` endpoint"
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/years` endpoint"),
 ):
     models_list = []
 
+    if not search_link:
+        search_link = craft_search_link(search_make=search_make, search_year=search_year)
     browser = mechanize.Browser()
     page_content = browser.open( search_link ).read()
     browser.close()
@@ -143,13 +252,16 @@ async def get_engines(
     search_make: str,
     search_year: str,
     search_model: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/models` endpoint"
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/models` endpoint"),
 ):
     engines_list = []
 
+    if not search_link:
+        search_link = craft_search_link(
+            search_make=search_make,
+            search_year=search_year,
+            search_model=search_model,
+        )
     browser = mechanize.Browser()
     page_content = browser.open( search_link ).read()
     browser.close()
@@ -165,7 +277,7 @@ async def get_engines(
     # Get [Make, Year, Model, Link]
     for x in soup_filter:
         engines_list.append( {'make': search_make, 'year': search_year, 'model': search_model, 'engine': x.get_text(), 'link': 'https://www.rockauto.com' + str( x.get('href') ) })
-    
+
     return engines_list
 
 @rockauto_api.get("/categories/{search_vehicle}", tags=["Catalog"])
@@ -174,13 +286,17 @@ async def get_categories(
     search_year: str,
     search_model: str,
     search_engine: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/engines` endpoint"
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/engines` endpoint"),
 ):
     categories_list = []
 
+    if not search_link:
+        search_link = craft_search_link(
+            search_make=search_make,
+            search_year=search_year,
+            search_model=search_model,
+            search_engine=search_engine,
+        )
     browser = mechanize.Browser()
     page_content = browser.open( search_link ).read()
     browser.close()
@@ -199,13 +315,18 @@ async def get_sub_categories(
     search_model: str,
     search_engine: str,
     search_category: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/categories` endpoint"
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/categories` endpoint"),
 ):
     sub_categories_list = []
 
+    if not search_link:
+        search_link = craft_search_link(
+            search_make=search_make,
+            search_year=search_year,
+            search_model=search_model,
+            search_engine=search_engine,
+            search_category=search_category,
+        )
     browser = mechanize.Browser()
     page_content = browser.open( search_link ).read()
     browser.close()
@@ -229,49 +350,55 @@ async def get_parts(
     search_engine: str,
     search_category: str,
     search_subcategory: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/sub_categories` endpoint",
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/sub_categories` endpoint"),
 ):
     """
     Get parts for a specific vehicle and subcategory
-    
+
     Returns a list of parts with price, manufacturer, and notes
     """
     parts_list = []
 
+    if not search_link:
+        search_link = craft_search_link(
+            search_make=search_make,
+            search_year=search_year,
+            search_model=search_model,
+            search_engine=search_engine,
+            search_category=search_category,
+            search_subcategory=search_subcategory,
+        )
     browser = mechanize.Browser()
     page_content = browser.open(search_link).read()
     browser.close()
 
     soup = BeautifulSoup(page_content, features='html5lib')
-    
+
     # Find parts table rows
     part_rows = soup.find_all('tr', attrs={'class': 'listing-inner-row'})
-    
+
     for row in part_rows:
         try:
             # Get manufacturer
             manufacturer_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'})
             manufacturer = manufacturer_elem.get_text().strip() if manufacturer_elem else "N/A"
-            
+
             # Get part number
             part_number_elem = row.find('span', attrs={'class': 'listing-final-partnumber'})
             part_number = part_number_elem.get_text().strip() if part_number_elem else "N/A"
-            
+
             # Get price
             price_elem = row.find('span', attrs={'class': 'listing-price'})
             price = price_elem.get_text().strip() if price_elem else "N/A"
-            
+
             # Get part notes/info
             info_elem = row.find('div', attrs={'class': 'listing-text-row'})
             info = info_elem.get_text().strip() if info_elem else "N/A"
-            
+
             # Get more info link if available
             link_elem = row.find('a', attrs={'class': 'more-info-link'})
             more_info_link = "https://www.rockauto.com" + link_elem['href'] if link_elem and 'href' in link_elem.attrs else None
-            
+
             parts_list.append({
                 'make': search_make,
                 'year': search_year,
@@ -288,14 +415,9 @@ async def get_parts(
         except Exception as e:
             # Skip any parts with parsing issues
             continue
-    
-    return parts_list
 
-@rockauto_api.get(
-    "/closeouts/{carcode}",
-    description="Get closeout deals for a specific vehicle",
-    tags=["Parts"],
-)
+    return parts_list
+@rockauto_api.get("/closeouts/{carcode}", description="Get closeout deals for a specific vehicle", tags=["Parts"])
 async def get_closeout_deals(carcode: str):
     """
     Get closeout deals for a specific vehicle
@@ -362,11 +484,7 @@ async def get_closeout_deals(carcode: str):
     
     return closeout_deals
 
-@rockauto_api.get(
-    "/search",
-    description="Search for vehicles and parts with flexible filtering options",
-    tags=["Parts"],
-)
+@rockauto_api.get("/search", description="Search for vehicles and parts with flexible filtering options", tags=["Parts"])
 async def search_parts(
     search_make: str = None, 
     search_year: str = None, 
@@ -1098,11 +1216,7 @@ async def search_parts(
     return result
 
 
-@rockauto_api.get(
-    "/part_number/{partnum}",
-    description="Search for parts by part number",
-    tags=["Parts"],
-)
+@rockauto_api.get("/part_number/{partnum}", description="Search for parts by part number")
 async def search_part_by_number(partnum: str):
     """Return list of RockAuto part numbers that cross-reference the given number
     along with any extra details available from the part's information page."""
@@ -1156,26 +1270,14 @@ async def search_part_by_number(partnum: str):
     except Exception:
         return []
 
-@rockauto_api.get(
-    "/vehicle_info/{search_vehicle}",
-    description="Get detailed information about a specific vehicle",
-    tags=["Vehicles"],
-)
+@rockauto_api.get("/vehicle_info/{search_vehicle}", description="Get detailed information about a specific vehicle", tags=["Vehicles"])
 async def get_vehicle_info(
     search_make: str,
     search_year: str,
     search_model: str,
     search_engine: str,
-    search_link: str = Query(
-        ...,
-        description="Navigation link from the `/parts` endpoint",
-    ),
+    search_link: Optional[str] = Query(None, description="Navigation link from the `/parts` endpoint"),
 ):
-    """
-    Get detailed enthusiast-level information about a specific vehicle
-    
-    Returns vehicle type, country of assembly, and other header level information
-    """
     vehicle_info = {
         'make': search_make,
         'year': search_year,
@@ -1184,6 +1286,13 @@ async def get_vehicle_info(
         'details': {}
     }
     
+    if not search_link:
+        search_link = craft_search_link(
+            search_make=search_make,
+            search_year=search_year,
+            search_model=search_model,
+            search_engine=search_engine,
+        )
     browser = mechanize.Browser()
     page_content = browser.open(search_link).read()
     browser.close()

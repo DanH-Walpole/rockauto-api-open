@@ -139,9 +139,7 @@ The API provides several endpoints to navigate RockAuto's parts catalog:
 * `/engines/{search_vehicle}` - Get engines for a specific make, year, and model
 * `/categories/{search_vehicle}` - Get part categories for a specific vehicle
 
-Many endpoints accept a `search_link` query parameter. This value should be taken
-from the `link` field returned by the previous endpoint. It tells the API which
-page of the RockAuto catalog to fetch next.
+Many endpoints accept a `search_link` query parameter. If omitted, the API will attempt to construct this value automatically from the other parameters. You may also provide the `link` returned by the previous endpoint.
 
 #### Get Models for a Year
 ```
