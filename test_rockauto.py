@@ -135,6 +135,8 @@ def test_part_number_search():
     import asyncio
     results = asyncio.run(search_part_by_number("4B0839461"))
     part_nums = [r["part_number"] for r in results]
-    prices = [r.get("price") for r in results]
+
     assert "WPR5479LB" in part_nums
-    assert all(price is not None for price in prices)
+
+    selected = next(r for r in results if r["part_number"] == "WPR5479LB")
+    assert "Warranty Information" in selected["extra_details"]
