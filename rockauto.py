@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -54,7 +54,8 @@ async def root():
             "search": "Search for vehicles and parts with flexible filtering options",
             "closeouts/{carcode}": "Get closeout deals for a specific vehicle",
             "vehicle_info/{search_vehicle}": "Get detailed information about a specific vehicle"
-        }
+        },
+        "note": "Use the `link` value from one endpoint as the `search_link` parameter for the next"
     }
 
 @rockauto_api.get("/makes", tags=["Catalog"])
@@ -81,7 +82,13 @@ async def get_makes():
     return makes_list
 
 @rockauto_api.get("/years/{search_vehicle}", tags=["Catalog"])
-async def get_years( search_make: str, search_link: str ):
+async def get_years(
+    search_make: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/makes` endpoint"
+    ),
+):
     years_list = []
 
     browser = mechanize.Browser()
@@ -103,7 +110,14 @@ async def get_years( search_make: str, search_link: str ):
     return years_list
 
 @rockauto_api.get("/years/{search_vehicle}", tags=["Catalog"])
-async def get_models( search_make: str, search_year: str, search_link: str ):
+async def get_models(
+    search_make: str,
+    search_year: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/years` endpoint"
+    ),
+):
     models_list = []
 
     browser = mechanize.Browser()
@@ -125,7 +139,15 @@ async def get_models( search_make: str, search_year: str, search_link: str ):
     return models_list
 
 @rockauto_api.get("/engines/{search_vehicle}", tags=["Catalog"])
-async def get_engines( search_make: str, search_year: str, search_model: str, search_link: str ):
+async def get_engines(
+    search_make: str,
+    search_year: str,
+    search_model: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/models` endpoint"
+    ),
+):
     engines_list = []
 
     browser = mechanize.Browser()
@@ -147,7 +169,16 @@ async def get_engines( search_make: str, search_year: str, search_model: str, se
     return engines_list
 
 @rockauto_api.get("/categories/{search_vehicle}", tags=["Catalog"])
-async def get_categories( search_make: str, search_year: str, search_model: str, search_engine: str, search_link: str ):
+async def get_categories(
+    search_make: str,
+    search_year: str,
+    search_model: str,
+    search_engine: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/engines` endpoint"
+    ),
+):
     categories_list = []
 
     browser = mechanize.Browser()
@@ -162,7 +193,17 @@ async def get_categories( search_make: str, search_year: str, search_model: str,
     return categories_list
 
 @rockauto_api.get("/sub_categories/{search_vehicle}", tags=["Catalog"])
-async def get_sub_categories( search_make: str, search_year: str, search_model: str, search_engine: str, search_category: str, search_link: str ):
+async def get_sub_categories(
+    search_make: str,
+    search_year: str,
+    search_model: str,
+    search_engine: str,
+    search_category: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/categories` endpoint"
+    ),
+):
     sub_categories_list = []
 
     browser = mechanize.Browser()
@@ -176,8 +217,23 @@ async def get_sub_categories( search_make: str, search_year: str, search_model: 
 
     return sub_categories_list
 
-@rockauto_api.get("/parts/{search_vehicle}", description="Get parts for a specific vehicle and subcategory", tags=["Parts"])
-async def get_parts( search_make: str, search_year: str, search_model: str, search_engine: str, search_category: str, search_subcategory: str, search_link: str ):
+@rockauto_api.get(
+    "/parts/{search_vehicle}",
+    description="Get parts for a specific vehicle and subcategory",
+    tags=["Parts"],
+)
+async def get_parts(
+    search_make: str,
+    search_year: str,
+    search_model: str,
+    search_engine: str,
+    search_category: str,
+    search_subcategory: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/sub_categories` endpoint",
+    ),
+):
     """
     Get parts for a specific vehicle and subcategory
     
@@ -1105,7 +1161,16 @@ async def search_part_by_number(partnum: str):
     description="Get detailed information about a specific vehicle",
     tags=["Vehicles"],
 )
-async def get_vehicle_info(search_make: str, search_year: str, search_model: str, search_engine: str, search_link: str):
+async def get_vehicle_info(
+    search_make: str,
+    search_year: str,
+    search_model: str,
+    search_engine: str,
+    search_link: str = Query(
+        ...,
+        description="Navigation link from the `/parts` endpoint",
+    ),
+):
     """
     Get detailed enthusiast-level information about a specific vehicle
     
