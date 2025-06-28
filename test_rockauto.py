@@ -1,6 +1,6 @@
 import pytest
 import inspect
-from rockauto import rockauto_api, get_parts, get_closeout_deals, get_vehicle_info, search_parts
+from rockauto import rockauto_api, get_parts, get_closeout_deals, get_vehicle_info, search_parts, search_part_by_number
 
 def test_endpoints_exist():
     """Test that the required endpoints exist in the API"""
@@ -128,3 +128,14 @@ def test_search_endpoint_with_part_type():
         assert "part_type_code" in part
         assert "price" in part
         assert part["part_type_code"] == response["filters"]["part_type"]
+
+
+def test_part_number_search():
+    """Ensure searching by part number returns expected RockAuto part numbers"""
+    import asyncio
+    results = asyncio.run(search_part_by_number("4B0839461"))
+    part_nums = [r["part_number"] for r in results]
+    assert "WPR5479LB" in part_nums
+
+    selected = next(r for r in results if r["part_number"] == "WPR5479LB")
+    assert "Warranty Information" in selected["extra_details"]

@@ -1013,6 +1013,60 @@ async def search_parts(
     result["message"] = "Search functionality works best with partial information to explore options"
     return result
 
+
+@rockauto_api.get("/part_number/{partnum}", description="Search for parts by part number")
+async def search_part_by_number(partnum: str):
+    """Return list of RockAuto part numbers that cross-reference the given number
+    along with any extra details available from the part's information page."""
+
+    url = f"https://www.rockauto.com/en/partsearch/?partnum={partnum}"
+    try:
+        resp = requests.get(url)
+        soup = BeautifulSoup(resp.text, features='html5lib')
+        results = []
+
+        for container in soup.find_all('tbody'):
+            cls = container.get('class')
+            if not cls or 'listing-inner' not in ' '.join(cls):
+                continue
+            row = container.find('tr')
+            if not row:
+                continue
+            pn_elem = row.find('span', attrs={'class': 'listing-final-partnumber'})
+            if not pn_elem:
+                continue
+            part_number = pn_elem.get_text().strip()
+            manuf_elem = row.find('span', attrs={'class': 'listing-final-manufacturer'})
+            manufacturer = manuf_elem.get_text().strip() if manuf_elem else 'N/A'
+
+            # Attempt to scrape extra details from the part's More Info page
+            extra_details = {}
+            link_elem = row.find('a', attrs={'class': 'ra-btn-moreinfo'}) or row.find('a', attrs={'class': 'more-info-link'})
+            if link_elem and link_elem.get('href'):
+                href = link_elem['href']
+                info_url = href if href.startswith('http') else "https://www.rockauto.com" + href
+                try:
+                    info_resp = requests.get(info_url)
+                    info_soup = BeautifulSoup(info_resp.text, features='html5lib')
+                    for sec in info_soup.find_all('section'):
+                        label = sec.get('aria-label')
+                        if label and label not in ('Add to Cart', 'Image of part'):
+                            text = sec.get_text(" ", strip=True)
+                            if text:
+                                extra_details[label] = text
+                except Exception:
+                    pass
+
+            results.append({
+                'manufacturer': manufacturer,
+                'part_number': part_number,
+                'extra_details': extra_details
+            })
+
+        return results
+    except Exception:
+        return []
+
 @rockauto_api.get("/vehicle_info/{search_vehicle}", description="Get detailed information about a specific vehicle")
 async def get_vehicle_info(search_make: str, search_year: str, search_model: str, search_engine: str, search_link: str):
     """
