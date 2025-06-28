@@ -82,7 +82,7 @@ async def get_years( search_make: str, search_link: str ):
 
     return years_list
 
-@rockauto_api.get("/years/{search_vehicle}")
+@rockauto_api.get("/models/{search_vehicle}")
 async def get_models( search_make: str, search_year: str, search_link: str ):
     models_list = []
 

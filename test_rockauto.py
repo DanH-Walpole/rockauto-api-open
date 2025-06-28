@@ -7,6 +7,11 @@ def test_endpoints_exist():
     routes = [route.path for route in rockauto_api.routes]
     assert "/" in routes
     assert "/makes" in routes
+    assert "/years/{search_vehicle}" in routes
+    assert "/models/{search_vehicle}" in routes
+    assert "/engines/{search_vehicle}" in routes
+    assert "/categories/{search_vehicle}" in routes
+    assert "/sub_categories/{search_vehicle}" in routes
     assert "/parts/{search_vehicle}" in routes
     assert "/closeouts/{carcode}" in routes
     assert "/vehicle_info/{search_vehicle}" in routes
