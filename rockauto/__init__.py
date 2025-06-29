@@ -1,7 +1,9 @@
+
 from fastapi import FastAPI
 import requests
 
 # Metadata for Swagger docs
+
 tags_metadata = [
     {"name": "General", "description": "Welcome message and project overview"},
     {"name": "Catalog", "description": "Navigate makes, years, models and categories"},
@@ -15,7 +17,6 @@ rockauto_api = FastAPI(
     version="0.1.0",
     openapi_tags=tags_metadata,
 )
-
 
 @rockauto_api.get("/", tags=["General"])
 async def root():
@@ -36,6 +37,7 @@ async def root():
         },
         "note": "Provide the `link` value from the previous endpoint as `search_link` or omit it to let the API generate one automatically",
     }
+
 
 # Import routes so they register with the app
 from .routes.catalog import (
@@ -71,3 +73,4 @@ __all__ = [
     "search_part_by_number",
     "get_vehicle_info",
 ]
+
