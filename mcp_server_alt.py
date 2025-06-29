@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Alternative MCP server that bypasses SSL issues by using a simpler HTTP approach
+"""
+import os
+import sys
+import ssl
+import urllib3
+
+# Disable SSL warnings and verification
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Set environment variables to disable SSL verification
+os.environ['PYTHONHTTPSVERIFY'] = '0'
+os.environ['HTTPX_SSL_VERIFY'] = 'false'
+
 from fastmcp import FastMCP
 from rockauto import rockauto_api
 

@@ -229,6 +229,16 @@ GET /part_number/2172
 Returns parts that cross-reference the provided part number along with any extra details.
 
 
+## MCP Server
+
+This project includes an MCP (Model Context Protocol) server that exposes the API as tools for AI assistants.
+
+To run the MCP server:
+```sh
+python mcp_server.py
+```
+
+The server will expose all API endpoints as MCP tools, making them available to compatible AI assistants and applications that support the MCP protocol.
 
 
 <!-- ROADMAP -->
