@@ -118,7 +118,7 @@ To get a local copy up and running follow these simple steps.
    ```sh
    git clone https://github.com/DanH-Walpole/rockauto-api-open.git
    ```
-2. Install Python packages
+2. Install runtime dependencies
    ```sh
    pip install -r requirements.txt
    ```
@@ -131,8 +131,9 @@ To get a local copy up and running follow these simple steps.
    python start.py
    ```
 
-4. (Optional) Run the tests
+4. (Optional) Install dev requirements and run the tests
    ```sh
+   pip install -r requirements-dev.txt
    pytest
    ```
    See `tests/README.md` for details on the lightweight test suite.
