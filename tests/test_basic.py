@@ -1,7 +1,10 @@
+import os
+import sys
 import asyncio
 from types import SimpleNamespace
 from fastapi.testclient import TestClient
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from rockauto import rockauto_api, search_part_by_number
 
 client = TestClient(rockauto_api)

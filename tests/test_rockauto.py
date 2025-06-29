@@ -1,5 +1,9 @@
+import os
+import sys
 import pytest
 import inspect
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from rockauto import rockauto_api, get_parts, get_closeout_deals, get_vehicle_info, search_parts, search_part_by_number
 
 def test_endpoints_exist():
@@ -130,13 +134,37 @@ def test_search_endpoint_with_part_type():
         assert part["part_type_code"] == response["filters"]["part_type"]
 
 
-def test_part_number_search():
-    """Ensure searching by part number returns expected RockAuto part numbers"""
+def test_part_number_search(monkeypatch):
+    """Ensure searching by part number parses the expected data without network"""
+
+    from types import SimpleNamespace
     import asyncio
+
+    def fake_get(url, *args, **kwargs):
+        if "partsearch" in url:
+            html = (
+                "<table>"
+                "<tbody class='listing-inner'>"
+                "<tr>"
+                "<td><span class='listing-final-partnumber'>WPR5479LB</span></td>"
+                "<td><span class='listing-final-manufacturer'>TESTCO</span></td>"
+                "<td><a class='ra-btn-moreinfo' href='https://example.com/info'></a></td>"
+                "</tr>"
+                "</tbody>"
+                "</table>"
+            )
+            return SimpleNamespace(text=f"<html><body>{html}</body></html>")
+        else:
+            html = "<section aria-label='Warranty Information'>Lifetime</section>"
+            return SimpleNamespace(text=f"<html><body>{html}</body></html>")
+
+    monkeypatch.setattr("rockauto.requests.get", fake_get)
     results = asyncio.run(search_part_by_number("4B0839461"))
-    part_nums = [r["part_number"] for r in results]
 
-    assert "WPR5479LB" in part_nums
-
-    selected = next(r for r in results if r["part_number"] == "WPR5479LB")
-    assert "Warranty Information" in selected["extra_details"]
+    assert results == [
+        {
+            "manufacturer": "TESTCO",
+            "part_number": "WPR5479LB",
+            "extra_details": {"Warranty Information": "Lifetime"},
+        }
+    ]
