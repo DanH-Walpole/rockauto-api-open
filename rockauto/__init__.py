@@ -11,6 +11,12 @@ import html5lib
 
 import requests
 import json
+import os
+
+# Default timeout (seconds) for all HTTP requests made via ``requests.get``.
+# Can be overridden by setting the ``ROCKAUTO_REQUEST_TIMEOUT`` environment
+# variable.
+DEFAULT_REQUEST_TIMEOUT = float(os.getenv("ROCKAUTO_REQUEST_TIMEOUT", "10"))
 
 tags_metadata = [
     {"name": "General", "description": "Welcome message and project overview"},
@@ -1224,7 +1230,7 @@ async def search_part_by_number(partnum: str):
 
     url = f"https://www.rockauto.com/en/partsearch/?partnum={partnum}"
     try:
-        resp = requests.get(url)
+        resp = requests.get(url, timeout=DEFAULT_REQUEST_TIMEOUT)
         soup = BeautifulSoup(resp.text, features='html5lib')
         results = []
 
@@ -1249,7 +1255,7 @@ async def search_part_by_number(partnum: str):
                 href = link_elem['href']
                 info_url = href if href.startswith('http') else "https://www.rockauto.com" + href
                 try:
-                    info_resp = requests.get(info_url)
+                    info_resp = requests.get(info_url, timeout=DEFAULT_REQUEST_TIMEOUT)
                     info_soup = BeautifulSoup(info_resp.text, features='html5lib')
                     for sec in info_soup.find_all('section'):
                         label = sec.get('aria-label')
