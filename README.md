@@ -135,7 +135,8 @@ To get a local copy up and running follow these simple steps.
    ```sh
    pytest
    ```
-   See `tests/README.md` for details on the lightweight test suite.
+   See `tests/README.md` for details on the lightweight test suite. All tests
+   mock network requests so they can run offline.
 
 
 <!-- USAGE EXAMPLES -->
